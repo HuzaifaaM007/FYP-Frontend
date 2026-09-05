@@ -1,5 +1,3 @@
-// lib/features/auth/screens/login_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../shared/widgets/app_button.dart';
