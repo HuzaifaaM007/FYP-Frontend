@@ -5,6 +5,8 @@ import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/home/providers/home_provider.dart';
 import 'features/home/screens/home_screen.dart';
+import 'features/lectures/providers/lecture_list_provider.dart';
+import 'features/lectures/screens/lecture_list_screen.dart';
 
 void main() {
   runApp(const StudySenseiApp());
@@ -19,6 +21,7 @@ class StudySenseiApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => HomeProvider()),
+        ChangeNotifierProvider(create: (_) => LectureListProvider()),
       ],
       child: MaterialApp(
         title: 'StudySensei',
@@ -28,6 +31,7 @@ class StudySenseiApp extends StatelessWidget {
         home: const LoginScreen(),
         routes: {
           '/home': (_) => const HomeScreen(),
+          '/lectures': (_) => const LectureListScreen(),
         },
       ),
     );
