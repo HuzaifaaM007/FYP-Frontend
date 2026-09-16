@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
+import 'core/navigation/app_routes.dart';
+import 'core/navigation/main_shell.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
+import 'features/auth/screens/register_screen.dart';
 import 'features/home/providers/home_provider.dart';
-import 'features/home/screens/home_screen.dart';
 import 'features/lectures/providers/lecture_list_provider.dart';
-import 'features/lectures/screens/lecture_list_screen.dart';
 
 void main() {
   runApp(const StudySenseiApp());
@@ -24,14 +25,15 @@ class StudySenseiApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LectureListProvider()),
       ],
       child: MaterialApp(
-        title: 'StudySensei',
+        title: 'Study Sensei',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark,
         themeMode: ThemeMode.dark,
-        home: const LoginScreen(),
+        initialRoute: AppRoutes.login,
         routes: {
-          '/home': (_) => const HomeScreen(),
-          '/lectures': (_) => const LectureListScreen(),
+          AppRoutes.login: (_) => const LoginScreen(),
+          AppRoutes.register: (_) => const RegisterScreen(),
+          AppRoutes.home: (_) => const MainShell(),
         },
       ),
     );
