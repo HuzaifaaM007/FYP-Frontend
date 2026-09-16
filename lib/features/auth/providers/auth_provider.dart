@@ -3,6 +3,7 @@ import '../services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final _authService = AuthService();
+  static const bool _bypassAuth = true; 
 
   bool isLoading = false;
   String? errorMessage;
@@ -11,6 +12,13 @@ class AuthProvider extends ChangeNotifier {
     isLoading = true;
     errorMessage = null;
     notifyListeners();
+
+    if (_bypassAuth) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      isLoading = false;
+      notifyListeners();
+      return true;
+    }
 
     try {
       await _authService.login(email, password);
@@ -32,6 +40,13 @@ class AuthProvider extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
 
+    if (_bypassAuth) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      isLoading = false;
+      notifyListeners();
+      return true;
+    }
+
     try {
       await _authService.register(email, password, fullName);
       return true;
@@ -46,9 +61,13 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-
+  
   void clearError() {
     errorMessage = null;
     notifyListeners();
+  }
+
+  Future<void> logout() async {
+    await AuthService().logout();
   }
 }
