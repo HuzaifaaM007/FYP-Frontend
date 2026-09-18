@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../models/quiz_response.dart';
 import '../models/submission.dart';
+import '../../../core/navigation/app_routes.dart';
 
 class QuizResultsScreen extends StatelessWidget {
   final QuizSubmission submission;
@@ -70,7 +71,7 @@ class QuizResultsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           AppButton(
             label: 'Done',
-            onPressed: () => Navigator.popUntil(context, (route) => route.isFirst || route.settings.name == '/home'),
+            onPressed: () => Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false),
           ),
         ],
       ),

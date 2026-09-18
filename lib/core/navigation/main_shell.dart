@@ -4,6 +4,7 @@ import '../../features/home/screens/home_screen.dart';
 import '../../features/lectures/screens/lecture_list_screen.dart';
 import '../../features/catalog/screens/catalog_home_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/planner/screens/planner_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -22,6 +23,7 @@ class _MainShellState extends State<MainShell> {
     HomeScreen(),
     LectureListScreen(),
     CatalogHomeScreen(),
+    PlannerScreen(),
     ProfileScreen(),
   ];
 
@@ -37,10 +39,31 @@ class _MainShellState extends State<MainShell> {
         selectedItemColor: AppColors.textPrimary,
         unselectedItemColor: AppColors.textSecondary,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.menu_book_outlined), activeIcon: Icon(Icons.menu_book), label: 'Lectures'),
-          BottomNavigationBarItem(icon: Icon(Icons.school_outlined), activeIcon: Icon(Icons.school), label: 'Courses'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu_book_outlined),
+            activeIcon: Icon(Icons.menu_book),
+            label: 'Lectures',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.school_outlined),
+            activeIcon: Icon(Icons.school),
+            label: 'Courses',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.checklist_outlined),
+            activeIcon: Icon(Icons.checklist),
+            label: 'Planner',
+          ),
         ],
       ),
     );

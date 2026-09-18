@@ -7,7 +7,9 @@ import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/register_screen.dart';
 import 'features/home/providers/home_provider.dart';
+import 'features/planner/providers/planner_provider.dart';
 import 'features/lectures/providers/lecture_list_provider.dart';
+import 'features/notifications/screens/notifications_placeholder_screen.dart';
 
 void main() {
   runApp(const StudySenseiApp());
@@ -23,6 +25,7 @@ class StudySenseiApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => HomeProvider()),
         ChangeNotifierProvider(create: (_) => LectureListProvider()),
+        ChangeNotifierProvider(create: (_) => PlannerProvider()),
       ],
       child: MaterialApp(
         title: 'Study Sensei',
@@ -34,6 +37,8 @@ class StudySenseiApp extends StatelessWidget {
           AppRoutes.login: (_) => const LoginScreen(),
           AppRoutes.register: (_) => const RegisterScreen(),
           AppRoutes.home: (_) => const MainShell(),
+          AppRoutes.notifications: (_) =>
+              const NotificationsPlaceholderScreen(),
         },
       ),
     );

@@ -61,18 +61,30 @@ class _LectureDetailScreenState extends State<LectureDetailScreen> {
       padding: const EdgeInsets.all(16),
       children: [
         // --- Summary section ---
-        const Text('Summary', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const Text(
+          'Summary',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 10),
         if (lecture.summaryText != null)
           Container(
             padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
-            child: Text(lecture.summaryText!, style: const TextStyle(height: 1.5)),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              lecture.summaryText!,
+              style: const TextStyle(height: 1.5),
+            ),
           )
         else ...[
           Container(
             padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: const Text(
               'No summary generated yet.',
               style: TextStyle(color: AppColors.textSecondary),
@@ -80,7 +92,10 @@ class _LectureDetailScreenState extends State<LectureDetailScreen> {
           ),
           const SizedBox(height: 10),
           if (provider.summaryError != null) ...[
-            Text(provider.summaryError!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
+            Text(
+              provider.summaryError!,
+              style: const TextStyle(color: AppColors.error, fontSize: 13),
+            ),
             const SizedBox(height: 8),
           ],
           AppButton(
@@ -93,13 +108,23 @@ class _LectureDetailScreenState extends State<LectureDetailScreen> {
         const SizedBox(height: 24),
 
         // --- Topics section ---
-        Text('Topics (${lecture.topics.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(
+          'Topics (${lecture.topics.length})',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 10),
         if (lecture.topics.isEmpty)
-          const Text('No topics were extracted from this lecture.', style: TextStyle(color: AppColors.textSecondary))
+          const Text(
+            'No topics were extracted from this lecture.',
+            style: TextStyle(color: AppColors.textSecondary),
+          )
         else
           ...lecture.topics.asMap().entries.map(
-            (entry) => TopicTile(topic: entry.value, index: entry.key),
+            (entry) => TopicTile(
+              topic: entry.value,
+              index: entry.key,
+              lectureId: lecture.lectureId,
+            ),
           ),
 
         const SizedBox(height: 24),
@@ -110,13 +135,12 @@ class _LectureDetailScreenState extends State<LectureDetailScreen> {
           onPressed: lecture.topics.isEmpty
               ? null
               : () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => QuizGenerationScreen(
-                        lectureId: lecture.lectureId,
-                      ),
-                    ),
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        QuizGenerationScreen(lectureId: lecture.lectureId),
                   ),
+                ),
         ),
       ],
     );
