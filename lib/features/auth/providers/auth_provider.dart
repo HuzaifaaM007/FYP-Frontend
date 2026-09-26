@@ -3,7 +3,7 @@ import '../services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final _authService = AuthService();
-  static const bool _bypassAuth = true; 
+  static const bool _bypassAuth = false; 
 
   bool isLoading = false;
   String? errorMessage;
