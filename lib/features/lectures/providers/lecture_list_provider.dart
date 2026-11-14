@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import '../models/lecture.dart';
 import '../services/lecture_service.dart';
@@ -30,22 +32,48 @@ class LectureListProvider extends ChangeNotifier {
     }
   }
 
-  Future<Lecture?> uploadLecture(String filePath, String fileName) async {
+  Future<Lecture?> uploadLecture(
+    String? filePath, // null on web; bytes are used instead
+    String fileName, {
+    Uint8List? bytes,
+  }) async {
+    if (filePath == null && bytes == null) {
+      uploadError = 'Could not read the selected file.';
+      notifyListeners();
+      return null;
+    }
+
     isUploading = true;
     uploadError = null;
     notifyListeners();
 
     try {
-      final lecture = await _service.uploadLecture(filePath, fileName);
+      final lecture = await _service.uploadLecture(
+        filePath,
+        fileName,
+        bytes: bytes,
+      );
       lectures.insert(0, lecture);
       return lecture;
     } catch (e) {
-      uploadError = 'Upload failed. The file may be too large, an unsupported '
+      uploadError =
+          'Upload failed. The file may be too large, an unsupported '
           'type, or the AI processing timed out — try again.';
       return null;
     } finally {
       isUploading = false;
       notifyListeners();
+    }
+  }
+
+  Future<bool> deleteLecture(String lectureId) async {
+    try {
+      await _service.deleteLecture(lectureId);
+      lectures.removeWhere((l) => l.lectureId == lectureId);
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 }

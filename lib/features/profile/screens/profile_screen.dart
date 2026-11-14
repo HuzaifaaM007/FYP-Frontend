@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/navigation/app_routes.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/loading_view.dart';
@@ -111,10 +110,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _handleLogout() async {
+    // Signing out resets the whole app (see main.dart), so no navigation is needed here.
     await context.read<AuthProvider>().logout();
-    if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false);
-    }
+  }
+
+  Future<void> _confirmDeleteAccount() async {
+    final passwordController = TextEditingController();
+    String? error;
+    bool deleting = false;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text('Delete account'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'This permanently deletes your account, uploaded lectures, quizzes, planner and notifications. '
+                'It cannot be undone.',
+                style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+              ),
+              const SizedBox(height: 14),
+              AppTextField(hint: 'Enter your password to confirm', controller: passwordController, obscureText: true),
+              if (error != null) ...[
+                const SizedBox(height: 8),
+                Text(error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: deleting ? null : () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: deleting
+                  ? null
+                  : () async {
+                      if (passwordController.text.isEmpty) {
+                        setDialogState(() => error = 'Enter your password.');
+                        return;
+                      }
+                      setDialogState(() {
+                        deleting = true;
+                        error = null;
+                      });
+                      final failure = await context.read<AuthProvider>().deleteAccount(passwordController.text);
+                      if (failure != null) {
+                        setDialogState(() {
+                          deleting = false;
+                          error = failure;
+                        });
+                      }
+                      // On success the app resets itself and this dialog disappears with it.
+                    },
+              child: Text(deleting ? 'Deleting...' : 'Delete forever', style: const TextStyle(color: AppColors.error)),
+            ),
+          ],
+        ),
+      ),
+    );
+    passwordController.dispose();
   }
 
   @override
@@ -170,6 +231,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         AppButton(label: 'Change Password', outlined: true, onPressed: _showChangePasswordSheet),
         const SizedBox(height: 12),
         AppButton(label: 'Log Out', onPressed: _handleLogout),
+        const SizedBox(height: 28),
+        const Divider(color: AppColors.border),
+        TextButton(
+          onPressed: _confirmDeleteAccount,
+          child: const Text('Delete my account', style: TextStyle(color: AppColors.error)),
+        ),
       ],
     );
   }

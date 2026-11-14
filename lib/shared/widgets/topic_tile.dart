@@ -40,7 +40,7 @@ class _TopicTileState extends State<TopicTile> {
       );
       final relativePath = response.data['file_path'] as String?;
       if (relativePath != null) {
-        setState(() => _audioUrl = '${Env.apiBaseUrl}/$relativePath');
+        setState(() => _audioUrl = '${Env.apiBaseUrl}/${relativePath.replaceAll('\\', '/')}');
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Audio is still processing — try again shortly.')),

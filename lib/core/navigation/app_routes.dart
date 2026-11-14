@@ -1,6 +1,7 @@
 class AppRoutes {
   AppRoutes._();
 
+  static const splash = '/';
   static const login = '/login';
   static const register = '/register';
   static const home = '/home';
@@ -8,4 +9,4 @@ class AppRoutes {
   static const catalog = '/catalog';
   static const profile = '/profile';
   static const notifications = '/notifications';
-} 
+}

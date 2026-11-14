@@ -9,6 +9,7 @@ class Lesson {
   final String sourceUrl;
   final bool quizEligible;
   final bool audioEligible;
+  final String attribution;
 
   Lesson({
     required this.lessonId,
@@ -21,6 +22,7 @@ class Lesson {
     required this.sourceUrl,
     required this.quizEligible,
     required this.audioEligible,
+    this.attribution = '',
   });
 
   factory Lesson.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class Lesson {
       sourceUrl: json['source_url'] as String,
       quizEligible: json['quiz_eligible'] as bool,
       audioEligible: json['audio_eligible'] as bool,
+      attribution: (json['attribution'] as String?) ?? '',
     );
   }
 }

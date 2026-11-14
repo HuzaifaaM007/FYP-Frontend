@@ -7,6 +7,7 @@ import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/lecture_card.dart';
 import '../providers/lecture_list_provider.dart';
 import 'lecture_detail_screen.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class LectureListScreen extends StatefulWidget {
   const LectureListScreen({super.key});
@@ -29,13 +30,21 @@ class _LectureListScreenState extends State<LectureListScreen> {
       type: FileType.custom,
       allowedExtensions: ['pdf', 'txt', 'pptx', 'docx'],
     );
-    if (files.isEmpty || files.single.path == null) return;
+    if (files.isEmpty) return;
 
     final file = files.single;
+    final path = kIsWeb ? null : file.path;
+    // Chrome has no file path, so read the bytes instead (file_picker 12+ API).
+    final bytes = path == null ? await file.readAsBytes() : null;
+    if (path == null && bytes == null) return;
     if (!mounted) return;
 
     final provider = context.read<LectureListProvider>();
-    final lecture = await provider.uploadLecture(file.path!, file.name);
+    final lecture = await provider.uploadLecture(
+      path,
+      file.name,
+      bytes: bytes,
+    );
 
     if (!mounted) return;
     if (lecture != null) {
@@ -128,12 +137,46 @@ class _LectureListScreenState extends State<LectureListScreen> {
       itemCount: provider.lectures.length,
       itemBuilder: (context, index) {
         final lecture = provider.lectures[index];
-        return LectureCard(
-          lecture: lecture,
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => LectureDetailScreen(lectureId: lecture.lectureId),
+        return GestureDetector(
+          onLongPress: () async {
+            final ok = await showDialog<bool>(
+              context: context,
+              builder: (d) => AlertDialog(
+                title: const Text('Delete lecture?'),
+                content: Text(
+                  '"${lecture.title}" and its topics, quizzes and audio will be removed.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(d, false),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(d, true),
+                    child: const Text('Delete'),
+                  ),
+                ],
+              ),
+            );
+            if (ok == true && context.mounted) {
+              final deleted = await context
+                  .read<LectureListProvider>()
+                  .deleteLecture(lecture.lectureId);
+              if (!deleted && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Could not delete the lecture.')),
+                );
+              }
+            }
+          },
+          child: LectureCard(
+            lecture: lecture,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    LectureDetailScreen(lectureId: lecture.lectureId),
+              ),
             ),
           ),
         );

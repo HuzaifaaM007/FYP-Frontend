@@ -16,10 +16,7 @@ class AuthService {
         'email': email,
         'password': password,
       });
-      await SecureStorageService.saveTokens(
-        accessToken: response.data['access_token'],
-        refreshToken: response.data['refresh_token'],
-      );
+      await ApiClient.saveTokensFrom(response.data);
     } on DioException catch (e) {
       throw AuthException(_mapLoginError(e));
     }
@@ -35,29 +32,53 @@ class AuthService {
     } on DioException catch (e) {
       throw AuthException(_mapRegisterError(e));
     }
-    // Only attempt auto-login once registration actually succeeded.
     try {
       await login(email, password);
     } on AuthException {
-      // Registration worked but auto-login failed for some reason (e.g. slow
-      // network right after signup) — don't mask this as a registration
-      // failure, since the account genuinely was created.
       throw AuthException('Account created, but automatic sign-in failed. Please log in manually.');
     }
   }
 
+  /// True when a saved login exists and the server still accepts it (refreshing it if needed).
+  Future<bool> hasValidSession() async {
+    if (await SecureStorageService.getAccessToken() == null) return false;
+    try {
+      await _dio.get('/auth/me');
+      return true;
+    } on DioException catch (e) {
+      // A network error should not throw the user out; let them in and the screens show their own retry.
+      return e.response == null;
+    }
+  }
+
   Future<void> logout() async {
+    final refresh = await SecureStorageService.getRefreshToken();
+    if (refresh != null) {
+      try {
+        await _dio.post('/auth/logout', data: {'refresh_token': refresh});
+      } catch (_) {
+        // Signing out on this device is enough if the server cannot be reached.
+      }
+    }
+    await SecureStorageService.clear();
+  }
+
+  Future<void> deleteAccount(String password) async {
+    try {
+      await _dio.delete('/auth/me', data: {'password': password});
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) throw AuthException('That password is not correct.');
+      if (e.response == null) throw AuthException('Could not reach the server. Try again.');
+      throw AuthException('Could not delete your account. Please try again.');
+    }
     await SecureStorageService.clear();
   }
 
   String _mapLoginError(DioException e) {
     final statusCode = e.response?.statusCode;
-    if (statusCode == 401) {
-      return 'Incorrect email or password.';
-    }
-    if (statusCode == 404) {
-      return 'No account found with that email.';
-    }
+    if (statusCode == 401) return 'Incorrect email or password.';
+    if (statusCode == 404) return 'No account found with that email.';
+    if (statusCode == 422) return 'Enter a valid email address and password.';
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.connectionError) {
@@ -68,12 +89,8 @@ class AuthService {
 
   String _mapRegisterError(DioException e) {
     final statusCode = e.response?.statusCode;
-    if (statusCode == 409) {
-      return 'An account with this email already exists.';
-    }
-    if (statusCode == 422) {
-      return 'Please check your details and try again.';
-    }
+    if (statusCode == 409) return 'An account with this email already exists.';
+    if (statusCode == 422) return 'Please check your details (password needs at least 8 characters).';
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.connectionError) {

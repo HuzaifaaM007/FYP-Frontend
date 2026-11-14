@@ -42,7 +42,7 @@ class QuizResultsScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: scoreColor.withOpacity(0.4)),
+              border: Border.all(color: scoreColor.withValues(alpha: 0.4)),
             ),
             child: Column(
               children: [
@@ -120,6 +120,11 @@ class _AnswerCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text('Your answer: ${result.studentAnswer}',
               style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+          if (!result.isCorrect && result.correctAnswer != null && result.correctAnswer!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text('Correct answer: ${result.correctAnswer}',
+                style: const TextStyle(color: AppColors.success, fontSize: 13, fontWeight: FontWeight.w600)),
+          ],
           if (question?.questionType == 'short_answer') ...[
             const SizedBox(height: 4),
             Text(

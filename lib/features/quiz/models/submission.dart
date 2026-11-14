@@ -7,6 +7,7 @@ class AnswerResult {
   final String feedback;
   final double confidence;
   final String? rubricNotes;
+  final String? correctAnswer;
 
   AnswerResult({
     required this.questionId,
@@ -17,6 +18,7 @@ class AnswerResult {
     required this.feedback,
     required this.confidence,
     this.rubricNotes,
+    this.correctAnswer,
   });
 
   factory AnswerResult.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class AnswerResult {
       feedback: json['feedback'] as String,
       confidence: (json['confidence'] as num).toDouble(),
       rubricNotes: json['rubric_notes'] as String?,
+      correctAnswer: json['correct_answer'] as String?,
     );
   }
 }
