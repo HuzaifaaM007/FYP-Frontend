@@ -1,5 +1,8 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import '../../../core/config/env.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_button.dart';
@@ -7,6 +10,8 @@ import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/loading_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/theme/theme_controller.dart';
+import '../../settings/screens/settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -19,6 +24,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _user;
   bool _isLoading = true;
   String? _error;
+  String? _avatarUrl; // absolute URL, with a version query so a new picture is not cached
+  bool _avatarBusy = false;
 
   @override
   void initState() {
@@ -34,10 +41,79 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final response = await ApiClient().dio.get('/auth/me');
       _user = response.data as Map<String, dynamic>;
+      await _loadAvatar();
     } catch (_) {
       _error = 'Could not load your profile.';
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadAvatar() async {
+    try {
+      final response = await ApiClient().dio.get('/me/avatar');
+      final path = response.data['avatar_url'] as String?;
+      _avatarUrl = path == null ? null : '${Env.apiBaseUrl}$path';
+    } catch (_) {
+      // Older backend: just show initials.
+    }
+  }
+
+  Future<void> _changePicture() async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Take a photo'),
+              onTap: () => Navigator.pop(ctx, 'camera'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Choose from gallery'),
+              onTap: () => Navigator.pop(ctx, 'gallery'),
+            ),
+            if (_avatarUrl != null)
+              ListTile(
+                leading: Icon(Icons.delete_outline, color: AppColors.error),
+                title: Text('Remove picture', style: TextStyle(color: AppColors.error)),
+                onTap: () => Navigator.pop(ctx, 'remove'),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (choice == null || !mounted) return;
+
+    setState(() => _avatarBusy = true);
+    try {
+      if (choice == 'remove') {
+        await ApiClient().dio.delete('/me/avatar');
+        _avatarUrl = null;
+      } else {
+        final picked = await ImagePicker().pickImage(
+          source: choice == 'camera' ? ImageSource.camera : ImageSource.gallery,
+          maxWidth: 1024,
+          maxHeight: 1024,
+          imageQuality: 85,
+        );
+        if (picked == null) return;
+        final form = FormData.fromMap({
+          'file': await MultipartFile.fromFile(picked.path, filename: 'avatar.jpg'),
+        });
+        final response = await ApiClient().dio.post('/me/avatar', data: form);
+        _avatarUrl = '${Env.apiBaseUrl}${response.data['avatar_url']}';
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not update your picture.')));
+      }
+    } finally {
+      if (mounted) setState(() => _avatarBusy = false);
     }
   }
 
@@ -68,7 +144,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               AppTextField(hint: 'New password', controller: newController, obscureText: true),
               if (sheetError != null) ...[
                 const SizedBox(height: 10),
-                Text(sheetError!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
+                Text(sheetError!, style: TextStyle(color: AppColors.error, fontSize: 13)),
               ],
               const SizedBox(height: 16),
               AppButton(
@@ -130,7 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'This permanently deletes your account, uploaded lectures, quizzes, planner and notifications. '
                 'It cannot be undone.',
                 style: TextStyle(color: AppColors.textSecondary, height: 1.4),
@@ -139,7 +215,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               AppTextField(hint: 'Enter your password to confirm', controller: passwordController, obscureText: true),
               if (error != null) ...[
                 const SizedBox(height: 8),
-                Text(error!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
+                Text(error!, style: TextStyle(color: AppColors.error, fontSize: 13)),
               ],
             ],
           ),
@@ -169,7 +245,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       }
                       // On success the app resets itself and this dialog disappears with it.
                     },
-              child: Text(deleting ? 'Deleting...' : 'Delete forever', style: const TextStyle(color: AppColors.error)),
+              child: Text(deleting ? 'Deleting...' : 'Delete forever', style: TextStyle(color: AppColors.error)),
             ),
           ],
         ),
@@ -196,15 +272,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.all(20),
       children: [
         Center(
-          child: CircleAvatar(
-            radius: 40,
-            backgroundColor: AppColors.surfaceElevated,
-            child: Text(
-              (user['full_name'] as String? ?? user['email'] as String).substring(0, 1).toUpperCase(),
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+          child: GestureDetector(
+            onTap: _avatarBusy ? null : _changePicture,
+            child: Stack(
+              children: [
+                CircleAvatar(
+                  radius: 48,
+                  backgroundColor: AppColors.surfaceElevated,
+                  backgroundImage: _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
+                  child: _avatarBusy
+                      ? const SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 2.5))
+                      : _avatarUrl == null
+                          ? Text(
+                              (user['full_name'] as String? ?? user['email'] as String).substring(0, 1).toUpperCase(),
+                              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                            )
+                          : null,
+                ),
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.background, width: 2),
+                    ),
+                    child: Icon(Icons.edit, size: 14, color: AppColors.onPrimary),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
+        const SizedBox(height: 6),
+        Center(child: Text('Tap the picture to change it', style: TextStyle(color: AppColors.textSecondary, fontSize: 11))),
         const SizedBox(height: 16),
         Center(
           child: Text(
@@ -213,7 +316,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         Center(
-          child: Text(user['email'] as String, style: const TextStyle(color: AppColors.textSecondary)),
+          child: Text(user['email'] as String, style: TextStyle(color: AppColors.textSecondary)),
         ),
         const SizedBox(height: 24),
         Container(
@@ -222,9 +325,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             children: [
               _InfoRow(label: 'Role', value: (user['role'] as String).toUpperCase()),
-              const Divider(color: AppColors.border),
+              Divider(color: AppColors.border),
               _InfoRow(label: 'Status', value: (user['is_active'] as bool) ? 'Active' : 'Inactive'),
             ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(14)),
+          child: ListTile(
+            leading: Icon(Icons.palette_outlined, color: AppColors.accentPurple),
+            title: const Text('Appearance'),
+            subtitle: Text('Theme: ${ThemeController.instance.palette.name}', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            trailing: Icon(Icons.chevron_right, color: AppColors.textSecondary),
+            onTap: () async {
+              await Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+              if (mounted) setState(() {}); // refresh the "Theme: ..." line
+            },
           ),
         ),
         const SizedBox(height: 24),
@@ -232,10 +349,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 12),
         AppButton(label: 'Log Out', onPressed: _handleLogout),
         const SizedBox(height: 28),
-        const Divider(color: AppColors.border),
+        Divider(color: AppColors.border),
         TextButton(
           onPressed: _confirmDeleteAccount,
-          child: const Text('Delete my account', style: TextStyle(color: AppColors.error)),
+          child: Text('Delete my account', style: TextStyle(color: AppColors.error)),
         ),
       ],
     );
@@ -255,7 +372,7 @@ class _InfoRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(color: AppColors.textSecondary)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),

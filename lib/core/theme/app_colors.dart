@@ -1,40 +1,37 @@
 import 'package:flutter/material.dart';
+import 'app_palette.dart';
+import 'theme_controller.dart';
 
+/// Colours of the currently selected theme.
+///
+/// These used to be `static const`; they are now getters, so any widget using them must not be
+/// `const` (see tools/remove_const_colors.py which does that change for you).
 class AppColors {
   AppColors._();
 
-  // Base surfaces — matches the black background in your mockups
-  static const Color background = Color(0xFF0A0A0A);
-  static const Color surface = Color(0xFF1A1A1A);
-  static const Color surfaceElevated = Color(0xFF242424);
+  static AppPalette get _p => ThemeController.instance.palette;
 
-  // Text
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFFA0A0A0);
-  static const Color textDisabled = Color(0xFF5A5A5A);
+  static Color get background => _p.background;
+  static Color get surface => _p.surface;
+  static Color get surfaceElevated => _p.surfaceElevated;
+  static Color get border => _p.border;
 
-  // Primary action color (buttons, links)
-  static const Color primary = Color(0xFFFFFFFF); // white buttons on black, per your login mockup
-  static const Color onPrimary = Color(0xFF000000);
+  static Color get textPrimary => _p.textPrimary;
+  static Color get textSecondary => _p.textSecondary;
+  static Color get textDisabled => _p.textDisabled;
 
-  // Accent colors for course tiles — pulled from the neon-ish mockup thumbnails
-  static const Color accentPurple = Color(0xFF9B5DE5);
-  static const Color accentBlue = Color(0xFF3A86FF);
-  static const Color accentOrange = Color(0xFFFB8500);
-  static const Color accentGreen = Color(0xFF06D6A0);
-  static const Color accentPink = Color(0xFFEF476F);
+  static Color get primary => _p.primary;
+  static Color get onPrimary => _p.onPrimary;
 
-  static const List<Color> accentPalette = [
-    accentPurple,
-    accentBlue,
-    accentOrange,
-    accentGreen,
-    accentPink,
-  ];
+  static Color get accentPurple => _p.accentPurple;
+  static Color get accentBlue => _p.accentBlue;
+  static Color get accentOrange => _p.accentOrange;
+  static Color get accentGreen => _p.accentGreen;
+  static Color get accentPink => _p.accentPink;
 
-  // Semantic
-  static const Color success = Color(0xFF06D6A0);
-  static const Color error = Color(0xFFEF476F);
-  static const Color warning = Color(0xFFFB8500);
-  static const Color border = Color(0xFF2E2E2E);
+  static List<Color> get accentPalette => _p.accentPalette;
+
+  static Color get success => _p.success;
+  static Color get error => _p.error;
+  static Color get warning => _p.warning;
 }

@@ -7,6 +7,7 @@ import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/lecture_card.dart';
 import '../providers/lecture_list_provider.dart';
 import 'lecture_detail_screen.dart';
+import '../../../shared/widgets/ai_gate.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class LectureListScreen extends StatefulWidget {
@@ -26,6 +27,7 @@ class _LectureListScreenState extends State<LectureListScreen> {
   }
 
   Future<void> _pickAndUpload() async {
+    if (!await AiGate.check(context)) return;
     final files = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'txt', 'pptx', 'docx'],
@@ -119,7 +121,7 @@ class _LectureListScreenState extends State<LectureListScreen> {
     }
     if (provider.lectures.isEmpty) {
       return ListView(
-        children: const [
+        children: [
           SizedBox(height: 160),
           Center(
             child: Text(

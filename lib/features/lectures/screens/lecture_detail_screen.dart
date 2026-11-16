@@ -7,6 +7,7 @@ import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/topic_tile.dart';
 import '../providers/lecture_detail_provider.dart';
 import '../../quiz/screens/quiz_generation_screen.dart';
+import '../../../shared/widgets/ai_gate.dart';
 
 class LectureDetailScreen extends StatefulWidget {
   final String lectureId;
@@ -83,7 +84,7 @@ class _LectureDetailScreenState extends State<LectureDetailScreen> {
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Text(
+            child: Text(
               'No summary generated yet.',
               style: TextStyle(color: AppColors.textSecondary),
             ),
@@ -92,14 +93,14 @@ class _LectureDetailScreenState extends State<LectureDetailScreen> {
           if (provider.summaryError != null) ...[
             Text(
               provider.summaryError!,
-              style: const TextStyle(color: AppColors.error, fontSize: 13),
+              style: TextStyle(color: AppColors.error, fontSize: 13),
             ),
             const SizedBox(height: 8),
           ],
           AppButton(
             label: 'Generate Summary',
             isLoading: provider.isGeneratingSummary,
-            onPressed: () => provider.generateSummary(widget.lectureId),
+            onPressed: () async { if (!await AiGate.check(context)) return; provider.generateSummary(widget.lectureId); },
           ),
         ],
 
@@ -112,7 +113,7 @@ class _LectureDetailScreenState extends State<LectureDetailScreen> {
         ),
         const SizedBox(height: 10),
         if (lecture.topics.isEmpty)
-          const Text(
+          Text(
             'No topics were extracted from this lecture.',
             style: TextStyle(color: AppColors.textSecondary),
           )

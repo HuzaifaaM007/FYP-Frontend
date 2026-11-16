@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/navigation/app_routes.dart';
 import 'core/navigation/main_shell.dart';
+import 'core/notifications/reminder_notifications.dart';
+import 'shared/widgets/connection_watcher.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/register_screen.dart';
@@ -12,7 +14,11 @@ import 'features/planner/providers/planner_provider.dart';
 import 'features/lectures/providers/lecture_list_provider.dart';
 import 'features/notifications/screens/notifications_placeholder_screen.dart';
 
-void main() {
+final navigatorKey = GlobalKey<NavigatorState>();
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ReminderNotifications.init();
   runApp(
     ChangeNotifierProvider(
       create: (_) => AuthProvider(),
@@ -37,7 +43,10 @@ class StudySenseiApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LectureListProvider()),
         ChangeNotifierProvider(create: (_) => PlannerProvider()),
       ],
-      child: MaterialApp(
+      child: ConnectionWatcher(
+        navigatorKey: navigatorKey,
+        child: MaterialApp(
+        navigatorKey: navigatorKey,
         title: 'Study Sensei',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark,
@@ -50,6 +59,7 @@ class StudySenseiApp extends StatelessWidget {
           AppRoutes.home: (_) => const MainShell(),
           AppRoutes.notifications: (_) => const NotificationsPlaceholderScreen(),
         },
+        ),
       ),
     );
   }

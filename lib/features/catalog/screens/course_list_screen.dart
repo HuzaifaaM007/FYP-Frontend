@@ -43,7 +43,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
               );
             }
             if (provider.courses.isEmpty) {
-              return const Center(child: Text('No courses in this subject yet.', style: TextStyle(color: AppColors.textSecondary)));
+              return Center(child: Text('No courses in this subject yet.', style: TextStyle(color: AppColors.textSecondary)));
             }
 
             return ListView.builder(
@@ -57,7 +57,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                   child: ListTile(
                     title: Text(course.title, style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text(course.description, maxLines: 2, overflow: TextOverflow.ellipsis),
-                    trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                    trailing: Icon(Icons.chevron_right, color: AppColors.textSecondary),
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => CourseDetailScreen(courseId: course.courseId, courseTitle: course.title)),

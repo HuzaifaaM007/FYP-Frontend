@@ -49,7 +49,7 @@ class _NotificationsPlaceholderScreenState extends State<NotificationsPlaceholde
       return ErrorView(message: provider.errorMessage ?? 'Something went wrong.', onRetry: () => provider.load());
     }
     if (provider.notifications.isEmpty) {
-      return const Center(child: Text('No notifications yet.', style: TextStyle(color: AppColors.textSecondary)));
+      return Center(child: Text('No notifications yet.', style: TextStyle(color: AppColors.textSecondary)));
     }
 
     return ListView.builder(
@@ -69,7 +69,7 @@ class _NotificationsPlaceholderScreenState extends State<NotificationsPlaceholde
             subtitle: Text(notification.body),
             trailing: notification.isRead
                 ? null
-                : Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.accentBlue, shape: BoxShape.circle)),
+                : Container(width: 8, height: 8, decoration: BoxDecoration(color: AppColors.accentBlue, shape: BoxShape.circle)),
             onTap: () => provider.markRead(notification.notificationId),
           ),
         );

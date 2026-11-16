@@ -36,6 +36,18 @@ class ApiClient {
             path.contains('/auth/refresh');
         final alreadyRetried = error.requestOptions.extra['retried'] == true;
 
+        // The server itself could not be reached: tell the app so it can show one clear dialog.
+        if (error.type == DioExceptionType.connectionError ||
+            error.type == DioExceptionType.connectionTimeout ||
+            error.type == DioExceptionType.receiveTimeout ||
+            error.type == DioExceptionType.sendTimeout) {
+          SessionEvents.notifyConnectionLost(
+            error.type == DioExceptionType.receiveTimeout
+                ? 'The server took too long to respond. The AI service may be busy or paused.'
+                : 'Could not reach the Study Sensei server. Check your internet connection, or that the server is running.',
+          );
+        }
+
         if (error.response?.statusCode == 401 && !isAuthCall && !alreadyRetried) {
           final refreshed = await _refreshOnce();
           if (refreshed) {

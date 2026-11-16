@@ -35,7 +35,7 @@ class MarkdownView extends StatelessWidget {
                 ),
               ),
               if (block.level <= 2)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(top: 6),
                   child: Divider(height: 1, color: AppColors.border),
                 ),
@@ -59,7 +59,7 @@ class MarkdownView extends StatelessWidget {
               SizedBox(
                 width: 24,
                 child: Text(block.kind == _Kind.bullet ? '•' : '${block.number}.',
-                    style: const TextStyle(fontSize: 15, height: 1.6, color: AppColors.textSecondary)),
+                    style: TextStyle(fontSize: 15, height: 1.6, color: AppColors.textSecondary)),
               ),
               Expanded(
                 child: SelectableText.rich(
@@ -73,14 +73,14 @@ class MarkdownView extends StatelessWidget {
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             border: Border(left: BorderSide(color: AppColors.accentBlue, width: 3)),
           ),
           child: SelectableText.rich(
             TextSpan(
               children: _inline(
                 block.text,
-                const TextStyle(fontSize: 15, height: 1.6, fontStyle: FontStyle.italic, color: AppColors.textSecondary),
+                TextStyle(fontSize: 15, height: 1.6, fontStyle: FontStyle.italic, color: AppColors.textSecondary),
               ),
             ),
           ),

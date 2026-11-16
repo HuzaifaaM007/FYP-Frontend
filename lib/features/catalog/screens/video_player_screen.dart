@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
@@ -26,10 +27,88 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   YoutubePlayerController? _youtube;
   VideoPlayerController? _direct;
 
+  // Watch tracking: counts the distinct seconds of the video that were really played (skipping ahead does not count).
+  Timer? _timer;
+  final Set<int> _watched = {};
+  int? _lastPos;
+  int? _duration;
+  double _percent = 0; // 0..1
+  bool _completed = false;
+  bool _reporting = false;
+  int _reportFailures = 0;
+
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  void _startTracking(CourseVideo video) {
+    _duration = video.durationSeconds;
+    _timer?.cancel();
+    if (_youtube == null && _direct == null) return; // external (e.g. Vimeo): cannot be tracked
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
+
+  Future<void> _tick() async {
+    if (_completed || !mounted) return;
+    int? pos;
+    var playing = false;
+    var dur = _duration;
+    try {
+      if (_youtube != null) {
+        playing = _youtube!.value.playerState == PlayerState.playing;
+        if (playing) {
+          pos = (await _youtube!.currentTime).floor();
+          if (dur == null || dur <= 0) {
+            final d = await _youtube!.duration;
+            if (d > 0) dur = d.floor();
+          }
+        }
+      } else if (_direct != null) {
+        final v = _direct!.value;
+        playing = v.isPlaying;
+        pos = v.position.inSeconds;
+        if (dur == null || dur <= 0) dur = v.duration.inSeconds;
+      }
+    } catch (_) {
+      return;
+    }
+    if (!playing || pos == null) {
+      _lastPos = null;
+      return;
+    }
+    _watched.add(pos);
+    // Continuous playback: fill the second we may have skipped between two samples (jitter, 2x speed).
+    if (_lastPos != null && pos - _lastPos! == 2) _watched.add(pos - 1);
+    _lastPos = pos;
+    _duration = dur;
+    if (dur != null && dur > 0) {
+      _percent = (_watched.length / dur).clamp(0.0, 1.0);
+      if (mounted) setState(() {});
+      if (_percent >= 0.9) _report(_percent * 100);
+    }
+  }
+
+  Future<void> _report(double percent) async {
+    if (_reporting || _completed || _reportFailures >= 3) return;
+    _reporting = true;
+    try {
+      final done = await _service.reportProgress(
+        kind: 'video',
+        entityId: widget.videoId,
+        percent: percent,
+        seconds: _watched.length,
+      );
+      if (done && mounted) {
+        setState(() => _completed = true);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Video completed')));
+      }
+    } catch (_) {
+      _reportFailures++;
+    } finally {
+      _reporting = false;
+    }
   }
 
   Future<void> _load() async {
@@ -51,6 +130,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         _direct = controller;
       }
       _video = video;
+      _startTracking(video);
     } catch (_) {
       _error = 'Could not load this video.';
     } finally {
@@ -60,6 +140,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   void dispose() {
+    _timer?.cancel();
     _youtube?.close();
     _direct?.dispose();
     super.dispose();
@@ -96,20 +177,55 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               Text(video.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               if (video.durationLabel != null) ...[
                 const SizedBox(height: 4),
-                Text(video.durationLabel!, style: const TextStyle(color: AppColors.textSecondary)),
+                Text(video.durationLabel!, style: TextStyle(color: AppColors.textSecondary)),
               ],
+              const SizedBox(height: 10),
+              _progressRow(video),
               if (video.description != null && video.description!.trim().isNotEmpty) ...[
                 const SizedBox(height: 12),
                 SelectableText(video.description!, style: const TextStyle(height: 1.5)),
               ],
               if (video.attribution != null && video.attribution!.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text('Source: ${video.attribution}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                Text('Source: ${video.attribution}', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
               ],
               const SizedBox(height: 20),
               if (video.transcript != null) _Transcript(text: video.transcript!, format: video.transcriptFormat),
             ],
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _progressRow(CourseVideo video) {
+    final trackable = _youtube != null || _direct != null;
+    if (!trackable) {
+      // Vimeo / external links open outside the app, so the app cannot see how much was watched.
+      return _completed
+          ? Text('Watched ✓', style: TextStyle(color: AppColors.accentGreen, fontWeight: FontWeight.w600))
+          : OutlinedButton.icon(
+              onPressed: () => _report(100),
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('Mark as watched'),
+            );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: _completed ? 1 : _percent,
+            minHeight: 5,
+            backgroundColor: AppColors.surfaceElevated,
+            valueColor: AlwaysStoppedAnimation(_completed ? AppColors.accentGreen : AppColors.accentOrange),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _completed ? 'Watched ✓' : 'Watched ${(_percent * 100).round()}%  (counts as done at 90%)',
+          style: TextStyle(color: _completed ? AppColors.accentGreen : AppColors.textSecondary, fontSize: 12),
         ),
       ],
     );
@@ -200,7 +316,7 @@ class _Transcript extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (entry.key != null)
-                    SizedBox(width: 48, child: Text(entry.key!, style: const TextStyle(color: AppColors.accentBlue, fontSize: 12))),
+                    SizedBox(width: 48, child: Text(entry.key!, style: TextStyle(color: AppColors.accentBlue, fontSize: 12))),
                   Expanded(child: SelectableText(entry.value, style: const TextStyle(height: 1.5))),
                 ],
               ),

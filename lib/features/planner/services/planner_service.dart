@@ -34,4 +34,8 @@ class PlannerService {
     final response = await _dio.patch('/planner/$plannerItemId', data: {'status': status});
     return PlannerItem.fromJson(response.data);
   }
+
+  Future<void> deleteItem(String plannerItemId) async {
+    await _dio.delete('/planner/$plannerItemId');
+  }
 }

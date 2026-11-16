@@ -45,7 +45,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)),
       );
     }
-    if (_error != null) return Text(_error!, style: const TextStyle(color: AppColors.error, fontSize: 13));
+    if (_error != null) return Text(_error!, style: TextStyle(color: AppColors.error, fontSize: 13));
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

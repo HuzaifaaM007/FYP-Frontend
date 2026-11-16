@@ -33,9 +33,9 @@ class RecommendationTile extends StatelessWidget {
           decoration: BoxDecoration(color: accentColor, borderRadius: BorderRadius.circular(4)),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(reason, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+        subtitle: Text(reason, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
         trailing: IconButton(
-          icon: const Icon(Icons.close, size: 18, color: AppColors.textSecondary),
+          icon: Icon(Icons.close, size: 18, color: AppColors.textSecondary),
           onPressed: onDismiss,
         ),
       ),

@@ -53,7 +53,7 @@ class QuizResultsScreen extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   '${submission.totalScore} / ${submission.totalPoints} points',
-                  style: const TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -119,17 +119,17 @@ class _AnswerCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text('Your answer: ${result.studentAnswer}',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
           if (!result.isCorrect && result.correctAnswer != null && result.correctAnswer!.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text('Correct answer: ${result.correctAnswer}',
-                style: const TextStyle(color: AppColors.success, fontSize: 13, fontWeight: FontWeight.w600)),
+                style: TextStyle(color: AppColors.success, fontSize: 13, fontWeight: FontWeight.w600)),
           ],
           if (question?.questionType == 'short_answer') ...[
             const SizedBox(height: 4),
             Text(
               'Match confidence: ${(result.similarityScore * 100).toStringAsFixed(0)}%',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
           ],
           if (result.feedback.isNotEmpty) ...[
@@ -147,7 +147,7 @@ class _AnswerCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               'Explanation: ${question!.explanation}',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontStyle: FontStyle.italic),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontStyle: FontStyle.italic),
             ),
           ],
         ],

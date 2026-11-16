@@ -86,7 +86,7 @@ class _TopicTileState extends State<TopicTile> {
                   children: [
                     Text(widget.topic.title, style: const TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
-                    Text(widget.topic.summary, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    Text(widget.topic.summary, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                     const SizedBox(height: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

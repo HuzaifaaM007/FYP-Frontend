@@ -81,7 +81,7 @@ class _LessonsTab extends StatelessWidget {
           return ErrorView(message: provider.errorMessage ?? 'Something went wrong.', onRetry: () => provider.load(courseId));
         }
         if (provider.lessons.isEmpty) {
-          return const Center(child: Text('No lessons in this course yet.', style: TextStyle(color: AppColors.textSecondary)));
+          return Center(child: Text('No lessons in this course yet.', style: TextStyle(color: AppColors.textSecondary)));
         }
         return RefreshIndicator(
           onRefresh: () => provider.load(courseId),
@@ -97,7 +97,7 @@ class _LessonsTab extends StatelessWidget {
                   leading: CircleAvatar(backgroundColor: AppColors.surfaceElevated, child: Text('${index + 1}')),
                   title: Text(lesson.title, style: const TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: Text('${lesson.estimatedMinutes} min · ${lesson.difficulty}'),
-                  trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                  trailing: Icon(Icons.chevron_right, color: AppColors.textSecondary),
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => LessonDetailScreen(lessonId: lesson.lessonId)),
@@ -125,7 +125,7 @@ class _VideosTab extends StatelessWidget {
           return ErrorView(message: provider.videosError!, onRetry: () => provider.loadVideos(courseId));
         }
         if (provider.videos.isEmpty) {
-          return const Center(child: Text('No videos in this course yet.', style: TextStyle(color: AppColors.textSecondary)));
+          return Center(child: Text('No videos in this course yet.', style: TextStyle(color: AppColors.textSecondary)));
         }
         return RefreshIndicator(
           onRefresh: () => provider.loadVideos(courseId),
@@ -183,7 +183,7 @@ class _VideoTile extends StatelessWidget {
                         if (video.durationLabel != null) video.durationLabel!,
                         if (video.hasTranscript) 'Transcript',
                       ].join(' · '),
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                     ),
                   ],
                 ),

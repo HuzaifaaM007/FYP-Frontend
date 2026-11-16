@@ -68,7 +68,7 @@ class LectureCard extends StatelessWidget {
             Text(_statusLabel(), style: TextStyle(color: _statusColor(), fontSize: 12)),
           ],
         ),
-        trailing: lecture.isReady ? const Icon(Icons.chevron_right, color: AppColors.textSecondary) : null,
+        trailing: lecture.isReady ? Icon(Icons.chevron_right, color: AppColors.textSecondary) : null,
       ),
     );
   }

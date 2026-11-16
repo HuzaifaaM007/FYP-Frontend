@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/config/env.dart';
 import '../../../core/network/api_client.dart';
@@ -19,7 +20,7 @@ class LessonDetailScreen extends StatefulWidget {
   State<LessonDetailScreen> createState() => _LessonDetailScreenState();
 }
 
-class _LessonDetailScreenState extends State<LessonDetailScreen> {
+class _LessonDetailScreenState extends State<LessonDetailScreen> with WidgetsBindingObserver {
   final _service = CatalogApiService();
   Lesson? _lesson;
   bool _isLoading = true;
@@ -28,10 +29,76 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   String? _audioUrl;
   bool _isGeneratingAudio = false;
 
+  // Reading progress: how far the student scrolled, and how long they actually spent here.
+  final _scroll = ScrollController();
+  Timer? _timer;
+  int _seconds = 0;
+  double _percent = 0; // 0..1, furthest point reached
+  bool _completed = false;
+  bool _reporting = false;
+  int _reportFailures = 0;
+  bool _foreground = true;
+  int _shownPercent = 0;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
     _load();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _scroll.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _foreground = state == AppLifecycleState.resumed;
+  }
+
+  void _tick() {
+    if (_lesson == null || _completed || !mounted) return;
+    if (_foreground) _seconds++;
+    if (_scroll.hasClients) {
+      final max = _scroll.position.maxScrollExtent;
+      final p = max <= 0 ? 1.0 : (_scroll.offset / max).clamp(0.0, 1.0);
+      if (p > _percent) _percent = p;
+    }
+    // Same rule as the server: 30% of the estimated reading time, between 10 and 90 seconds.
+    final needed = (_lesson!.estimatedMinutes * 60 * 0.3).clamp(10, 90);
+    if (_percent >= 0.9 && _seconds >= needed) _maybeReport();
+    final shown = (_percent * 100).round();
+    if (shown != _shownPercent && mounted) {
+      _shownPercent = shown;
+      setState(() {});
+    }
+  }
+
+  Future<void> _maybeReport() async {
+    if (_reporting || _completed || _reportFailures >= 3) return;
+    _reporting = true;
+    try {
+      final done = await _service.reportProgress(
+        kind: 'lesson',
+        entityId: widget.lessonId,
+        percent: _percent * 100,
+        seconds: _seconds,
+      );
+      // Not accepted yet (read too quickly): keep going, the next ticks will retry as time passes.
+      if (done && mounted) {
+        setState(() => _completed = true);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lesson completed')));
+      }
+    } catch (_) {
+      _reportFailures++;
+    } finally {
+      _reporting = false;
+    }
   }
 
   Future<void> _load() async {
@@ -79,13 +146,30 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     if (_error != null) return ErrorView(message: _error!, onRetry: _load);
 
     final lesson = _lesson!;
+    return Column(
+      children: [
+        LinearProgressIndicator(
+          value: _completed ? 1 : _percent,
+          minHeight: 3,
+          backgroundColor: AppColors.surfaceElevated,
+          valueColor: AlwaysStoppedAnimation(_completed ? AppColors.accentGreen : AppColors.accentBlue),
+        ),
+        Expanded(child: _lessonList(lesson)),
+      ],
+    );
+  }
+
+  Widget _lessonList(Lesson lesson) {
     return ListView(
+      controller: _scroll,
       padding: const EdgeInsets.all(16),
       children: [
         Text(lesson.title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, height: 1.3)),
         const SizedBox(height: 6),
-        Text('${lesson.estimatedMinutes} min read · ${lesson.difficulty}',
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+        Text(
+            '${lesson.estimatedMinutes} min read · ${lesson.difficulty}'
+            '${_completed ? ' · Completed ✓' : ' · ${(_percent * 100).round()}% read'}',
+            style: TextStyle(color: _completed ? AppColors.accentGreen : AppColors.textSecondary, fontSize: 13)),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(16),
@@ -94,7 +178,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         ),
         if (lesson.attribution.isNotEmpty) ...[
           const SizedBox(height: 12),
-          Text(lesson.attribution, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11, height: 1.4)),
+          Text(lesson.attribution, style: TextStyle(color: AppColors.textSecondary, fontSize: 11, height: 1.4)),
         ],
         const SizedBox(height: 20),
         if (lesson.audioEligible) ...[

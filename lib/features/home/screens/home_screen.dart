@@ -4,8 +4,15 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/loading_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/stat_card.dart';
+import '../../../shared/widgets/notification_bell.dart';
 import '../../../shared/widgets/recommendation_tile.dart';
+import '../../catalog/screens/course_detail_screen.dart';
+import '../../catalog/screens/lesson_detail_screen.dart';
+import '../../lectures/screens/lecture_detail_screen.dart';
+import '../models/recommendation.dart';
 import '../providers/home_provider.dart';
+import '../widgets/activity_chart.dart';
+import '../widgets/my_courses_section.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,17 +37,39 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Study Sensei'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () => Navigator.pushNamed(context, '/notifications'),
-          ),
-        ],
+        actions: const [NotificationBell()],
       ),
       body: RefreshIndicator(
         onRefresh: () => context.read<HomeProvider>().loadAll(),
         child: _buildBody(home),
       ),
+    );
+  }
+
+  /// Open what a recommendation points at. The title inside quotes is used as the screen title.
+  Future<void> _openRecommendation(RecommendationItem item) async {
+    context.read<HomeProvider>().markClicked(item.recommendationId);
+    final quoted = RegExp(r"'([^']+)'").firstMatch(item.explanation)?.group(1) ?? 'Course';
+    Widget? screen;
+    switch (item.targetType) {
+      case 'course':
+        screen = CourseDetailScreen(courseId: item.targetId, courseTitle: quoted);
+        break;
+      case 'lesson':
+        screen = LessonDetailScreen(lessonId: item.targetId);
+        break;
+      case 'summary':
+        screen = LectureDetailScreen(lectureId: item.targetId); // target is the lecture
+        break;
+    }
+    if (screen != null) {
+      await Navigator.push(context, MaterialPageRoute(builder: (_) => screen!));
+      return;
+    }
+    // topic / topic_audio / quiz live inside a lecture; send the student to their lectures.
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Open this from My Lectures.')),
     );
   }
 
@@ -65,6 +94,16 @@ class _HomeScreenState extends State<HomeScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        if (home.activity != null) ...[
+          ActivityChartCard(activity: home.activity!),
+          const SizedBox(height: 16),
+        ] else if (home.activityFailed) ...[
+          Padding(
+            padding: EdgeInsets.only(bottom: 16),
+            child: Text('Your activity graph could not be loaded. Pull down to retry.',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          ),
+        ],
         Row(
           children: [
             Expanded(
@@ -105,6 +144,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         const SizedBox(height: 24),
+        if (home.activity != null) ...[
+          MyCoursesSection(courses: home.activity!.courses),
+          const SizedBox(height: 24),
+        ],
         if (home.weakTopics.isNotEmpty) ...[
           const Text('Topics to Review', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
@@ -125,14 +168,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(topic.title, style: const TextStyle(fontWeight: FontWeight.w600)),
                         Text(
                           '${topic.attempts} attempt${topic.attempts == 1 ? '' : 's'}',
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                         ),
                       ],
                     ),
                   ),
                   Text(
                     '${topic.averageScore.toStringAsFixed(0)}%',
-                    style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -143,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
         const Text('Recommended for You', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         if (home.recommendations.isEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Text('No recommendations yet — take a few quizzes to get personalized picks.',
                 style: TextStyle(color: AppColors.textSecondary)),
@@ -157,9 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
               title: item.explanation,
               reason: item.reasonCode.replaceAll('_', ' '),
               accentColor: accent,
-              onTap: () {
-                context.read<HomeProvider>().dismissRecommendation(item.recommendationId); // placeholder nav target below
-              },
+              onTap: () => _openRecommendation(item),
               onDismiss: () => context.read<HomeProvider>().dismissRecommendation(item.recommendationId),
             );
           }),

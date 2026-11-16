@@ -40,4 +40,16 @@ class CatalogApiService {
     final response = await _dio.get('/catalog/videos/$videoId');
     return CourseVideo.fromJson(response.data);
   }
+
+  /// Tell the backend a lesson/video was finished. [kind] is 'lesson' or 'video'.
+  /// Returns true when the backend accepted it as completed.
+  Future<bool> reportProgress({required String kind, required String entityId, required double percent, int seconds = 0}) async {
+    final response = await _dio.post('/me/progress', data: {
+      'kind': kind,
+      'entity_id': entityId,
+      'percent': percent,
+      'seconds': seconds,
+    });
+    return (response.data as Map)['completed'] == true;
+  }
 }

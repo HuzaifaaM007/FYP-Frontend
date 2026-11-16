@@ -36,7 +36,7 @@ class _CatalogHomeScreenState extends State<CatalogHomeScreen> {
               return ErrorView(message: provider.errorMessage ?? 'Something went wrong.', onRetry: provider.load);
             }
             if (provider.subjects.isEmpty) {
-              return const Center(child: Text('No subjects available yet.', style: TextStyle(color: AppColors.textSecondary)));
+              return Center(child: Text('No subjects available yet.', style: TextStyle(color: AppColors.textSecondary)));
             }
 
             return GridView.builder(

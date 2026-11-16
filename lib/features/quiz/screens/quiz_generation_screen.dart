@@ -4,6 +4,7 @@ import '../../../shared/widgets/app_button.dart';
 import '../models/quiz_response.dart';
 import '../services/quiz_service.dart';
 import 'quiz_taking_screen.dart';
+import '../../../shared/widgets/ai_gate.dart';
 
 class QuizGenerationScreen extends StatefulWidget {
   final String? lectureId;
@@ -25,6 +26,7 @@ class _QuizGenerationScreenState extends State<QuizGenerationScreen> {
   String? _error;
 
   Future<void> _generate() async {
+    if (!await AiGate.check(context)) return;
     setState(() {
       _isGenerating = true;
       _error = null;
@@ -73,7 +75,7 @@ class _QuizGenerationScreenState extends State<QuizGenerationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
+            Text(
               'Choose how many questions to generate from this content.',
               style: TextStyle(color: AppColors.textSecondary),
             ),
@@ -83,7 +85,7 @@ class _QuizGenerationScreenState extends State<QuizGenerationScreen> {
             _counterRow('Short answer questions', _numShort, (v) => setState(() => _numShort = v), min: 0, max: 10),
             if (_error != null) ...[
               const SizedBox(height: 16),
-              Text(_error!, style: const TextStyle(color: AppColors.error)),
+              Text(_error!, style: TextStyle(color: AppColors.error)),
             ],
             const SizedBox(height: 32),
             AppButton(

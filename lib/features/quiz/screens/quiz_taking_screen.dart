@@ -81,7 +81,7 @@ class _QuizTakingScreenState extends State<QuizTakingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Question ${index + 1} · ${question.points} pt${question.points == 1 ? '' : 's'}',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
           const SizedBox(height: 8),
           Text(question.questionText, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           const SizedBox(height: 14),
@@ -126,7 +126,7 @@ class _QuizTakingScreenState extends State<QuizTakingScreen> {
               ),
             ),
             if (_error != null) ...[
-              Text(_error!, style: const TextStyle(color: AppColors.error)),
+              Text(_error!, style: TextStyle(color: AppColors.error)),
               const SizedBox(height: 8),
             ],
             AppButton(
