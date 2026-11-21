@@ -10,6 +10,7 @@ import '../../../shared/widgets/loading_view.dart';
 import '../../../shared/widgets/markdown_view.dart';
 import '../../quiz/screens/quiz_generation_screen.dart';
 import '../models/lesson.dart';
+import '../../discussion/widgets/discussion_section.dart';
 import '../services/catalog_service.dart';
 
 class LessonDetailScreen extends StatefulWidget {
@@ -196,6 +197,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> with WidgetsBin
               MaterialPageRoute(builder: (_) => QuizGenerationScreen(lessonId: lesson.lessonId)),
             ),
           ),
+        const SizedBox(height: 28),
+        Divider(color: AppColors.border),
+        const SizedBox(height: 12),
+        DiscussionSection(targetType: 'lesson', targetId: widget.lessonId),
+        const SizedBox(height: 24),
       ],
     );
   }

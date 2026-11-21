@@ -16,7 +16,7 @@ class ApiClient {
   ApiClient._internal() {
     dio = Dio(BaseOptions(
       baseUrl: Env.apiBaseUrl,
-      connectTimeout: const Duration(seconds: 15),
+      connectTimeout: const Duration(seconds: 10),
       // AI calls (quiz, summary) can take over a minute when the model is cold.
       receiveTimeout: const Duration(seconds: 150),
     ));

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_palette.dart';
+import 'theme_controller.dart';
 
 class AppTheme {
   AppTheme._();
 
-  /// Kept for old call sites; same as building from the Midnight palette.
-  static ThemeData get dark => fromPalette(AppPalettes.midnight);
+  /// The CURRENT theme. Old code that still says `theme: AppTheme.dark` now follows the user's choice too.
+  static ThemeData get dark => fromPalette(ThemeController.instance.palette);
+  static ThemeData get current => dark;
 
   static ThemeData fromPalette(AppPalette p) {
     final base = p.isDark ? ThemeData.dark() : ThemeData.light();
@@ -32,6 +35,8 @@ class AppTheme {
         centerTitle: false,
         foregroundColor: p.textPrimary,
         iconTheme: IconThemeData(color: p.textPrimary),
+        // Status bar icons: white on dark themes, dark on light themes.
+        systemOverlayStyle: p.isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       ),
       iconTheme: IconThemeData(color: p.textPrimary),
       inputDecorationTheme: InputDecorationTheme(
@@ -39,6 +44,9 @@ class AppTheme {
         fillColor: p.surface,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
         hintStyle: TextStyle(color: p.textSecondary),
+        labelStyle: TextStyle(color: p.textSecondary),
+        prefixIconColor: p.textSecondary,
+        suffixIconColor: p.textSecondary,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -63,11 +71,17 @@ class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: p.surface,
         indicatorColor: p.primary.withOpacity(0.18),
+        height: 74,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         iconTheme: WidgetStateProperty.resolveWith(
-          (s) => IconThemeData(color: s.contains(WidgetState.selected) ? p.primary : p.textSecondary),
+          (s) => IconThemeData(size: 27, color: s.contains(WidgetState.selected) ? p.primary : p.textSecondary),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
-          (s) => TextStyle(fontSize: 12, color: s.contains(WidgetState.selected) ? p.primary : p.textSecondary),
+          (s) => TextStyle(
+            fontSize: 12.5,
+            fontWeight: s.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500,
+            color: s.contains(WidgetState.selected) ? p.primary : p.textSecondary,
+          ),
         ),
       ),
       tabBarTheme: base.tabBarTheme.copyWith(
@@ -75,7 +89,11 @@ class AppTheme {
         unselectedLabelColor: p.textSecondary,
         indicatorColor: p.primary,
       ),
-      dialogTheme: base.dialogTheme.copyWith(backgroundColor: p.surface),
+      dialogTheme: base.dialogTheme.copyWith(
+        backgroundColor: p.surface,
+        titleTextStyle: TextStyle(color: p.textPrimary, fontSize: 20, fontWeight: FontWeight.w600),
+        contentTextStyle: TextStyle(color: p.textSecondary, fontSize: 14),
+      ),
       bottomSheetTheme: BottomSheetThemeData(backgroundColor: p.surface),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: p.surfaceElevated,
@@ -86,7 +104,14 @@ class AppTheme {
         checkColor: WidgetStateProperty.all(p.onPrimary),
         side: BorderSide(color: p.textSecondary),
       ),
+      canvasColor: p.background,
       cardColor: p.surface,
+      listTileTheme: ListTileThemeData(textColor: p.textPrimary, iconColor: p.textSecondary),
+      chipTheme: base.chipTheme.copyWith(backgroundColor: p.surfaceElevated, selectedColor: p.primary.withOpacity(0.25), labelStyle: TextStyle(color: p.textPrimary), side: BorderSide(color: p.border)),
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: p.primary),
+      popupMenuTheme: PopupMenuThemeData(color: p.surface),
+      drawerTheme: DrawerThemeData(backgroundColor: p.surface),
+      dividerTheme: DividerThemeData(color: p.border),
       dividerColor: p.border,
       splashColor: p.primary.withOpacity(0.08),
     );

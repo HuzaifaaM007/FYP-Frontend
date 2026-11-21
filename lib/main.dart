@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_controller.dart';
 import 'core/navigation/app_routes.dart';
 import 'core/navigation/main_shell.dart';
 import 'core/notifications/reminder_notifications.dart';
@@ -18,6 +19,7 @@ final navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ThemeController.instance.load();
   await ReminderNotifications.init();
   runApp(
     ChangeNotifierProvider(
@@ -45,12 +47,13 @@ class StudySenseiApp extends StatelessWidget {
       ],
       child: ConnectionWatcher(
         navigatorKey: navigatorKey,
-        child: MaterialApp(
+        child: AnimatedBuilder(
+          animation: ThemeController.instance,
+          builder: (context, _) => MaterialApp(
         navigatorKey: navigatorKey,
         title: 'Study Sensei',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.dark,
-        themeMode: ThemeMode.dark,
+        theme: AppTheme.fromPalette(ThemeController.instance.palette),
         initialRoute: AppRoutes.splash,
         routes: {
           AppRoutes.splash: (_) => const SplashScreen(),
@@ -59,6 +62,7 @@ class StudySenseiApp extends StatelessWidget {
           AppRoutes.home: (_) => const MainShell(),
           AppRoutes.notifications: (_) => const NotificationsPlaceholderScreen(),
         },
+          ),
         ),
       ),
     );

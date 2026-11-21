@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app_palette.dart';
 
@@ -26,9 +27,26 @@ class ThemeController extends ChangeNotifier {
     if (palette.id == _palette.id) return;
     _palette = palette;
     notifyListeners();
+    _rebuildEverything();
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_key, palette.id);
     } catch (_) {}
+  }
+
+  /// Widgets that read AppColors directly (not through Theme.of) do not know the theme changed.
+  /// This marks every widget on screen (and on every open page behind it) to rebuild once,
+  /// so backgrounds, cards and text all switch together. Scroll positions and screen state are kept.
+  static void _rebuildEverything() {
+    void rebuild(Element el) {
+      el.markNeedsBuild();
+      el.visitChildren(rebuild);
+    }
+
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      final root = WidgetsBinding.instance.rootElement;
+      if (root == null) return;
+      rebuild(root);
+    });
   }
 }

@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/loading_view.dart';
 import '../models/course_video.dart';
+import '../../discussion/widgets/discussion_section.dart';
 import '../services/catalog_service.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
@@ -191,6 +192,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               ],
               const SizedBox(height: 20),
               if (video.transcript != null) _Transcript(text: video.transcript!, format: video.transcriptFormat),
+              const SizedBox(height: 28),
+              Divider(color: AppColors.border),
+              const SizedBox(height: 12),
+              DiscussionSection(targetType: 'video', targetId: widget.videoId),
+              const SizedBox(height: 24),
             ],
           ),
         ),

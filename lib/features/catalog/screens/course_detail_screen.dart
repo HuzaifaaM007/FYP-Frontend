@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/loading_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../models/course_video.dart';
+import '../../discussion/widgets/discussion_section.dart';
 import '../providers/course_detail_provider.dart';
 import '../providers/subject_list_provider.dart'; // for CatalogLoadState
 import 'lesson_detail_screen.dart';
@@ -40,7 +41,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     return ChangeNotifierProvider.value(
       value: _provider,
       child: DefaultTabController(
-        length: 2,
+        length: 3,
         child: Scaffold(
           appBar: AppBar(
             title: Text(widget.courseTitle),
@@ -53,6 +54,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 Consumer<CourseDetailProvider>(
                   builder: (_, p, __) => Tab(text: p.videos.isEmpty ? 'Videos' : 'Videos (${p.videos.length})'),
                 ),
+                const Tab(text: 'Discussion'),
               ],
             ),
           ),
@@ -60,6 +62,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             children: [
               _LessonsTab(courseId: widget.courseId),
               _VideosTab(courseId: widget.courseId),
+              DiscussionSection(targetType: 'course', targetId: widget.courseId, embedded: false),
             ],
           ),
         ),

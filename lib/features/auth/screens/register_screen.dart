@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_logo.dart';
 import '../../../shared/widgets/app_text_field.dart';
+import '../../../core/theme/app_colors.dart';
 import '../providers/auth_provider.dart';
+import 'verify_email_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -59,8 +62,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     final success = await auth.register(email, password, fullName);
-    if (success && mounted) {
+    if (!mounted) return;
+    if (success) {
       Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+    } else if (auth.pendingVerificationEmail != null) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => VerifyEmailScreen(email: auth.pendingVerificationEmail!)));
     }
   }
 
@@ -77,12 +83,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const AppLogo(size: 64),
+              const SizedBox(height: 12),
               Text(
                 'Join Study Sensei',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
-              const Text('Create an account to start learning'),
+              const Text('Create an account to start learning. We will email you a code to confirm your address.'),
               const SizedBox(height: 28),
               AppTextField(
                 hint: 'Full name',
@@ -109,7 +117,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               if (errorToShow != null) ...[
                 const SizedBox(height: 12),
-                Text(errorToShow, style: const TextStyle(color: Colors.redAccent)),
+                Text(errorToShow, style: TextStyle(color: AppColors.error)),
               ],
               const SizedBox(height: 24),
               AppButton(

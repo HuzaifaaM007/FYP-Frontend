@@ -24,6 +24,7 @@ class RecommendationTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
       ),
       child: ListTile(
         onTap: onTap,
@@ -32,11 +33,18 @@ class RecommendationTile extends StatelessWidget {
           width: 8,
           decoration: BoxDecoration(color: accentColor, borderRadius: BorderRadius.circular(4)),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(title, style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
         subtitle: Text(reason, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-        trailing: IconButton(
-          icon: Icon(Icons.close, size: 18, color: AppColors.textSecondary),
-          onPressed: onDismiss,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.chevron_right, color: AppColors.textSecondary),
+            IconButton(
+              icon: Icon(Icons.close, size: 18, color: AppColors.textSecondary),
+              tooltip: 'Not interested',
+              onPressed: onDismiss,
+            ),
+          ],
         ),
       ),
     );

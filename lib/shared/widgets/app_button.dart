@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 class AppButton extends StatelessWidget {
   final String label;
@@ -17,23 +18,33 @@ class AppButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final child = isLoading
-        ? const SizedBox(
+        ? SizedBox(
             height: 20,
             width: 20,
-            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+            child: CircularProgressIndicator(strokeWidth: 2, color: outlined ? AppColors.textPrimary : AppColors.onPrimary),
           )
         : Text(label);
 
     if (outlined) {
       return OutlinedButton(
         onPressed: isLoading ? null : onPressed,
-        style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 52)),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 52),
+          foregroundColor: AppColors.textPrimary,
+          side: BorderSide(color: AppColors.border),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
         child: child,
       );
     }
 
     return ElevatedButton(
       onPressed: isLoading ? null : onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.onPrimary,
+        disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
+      ),
       child: child,
     );
   }

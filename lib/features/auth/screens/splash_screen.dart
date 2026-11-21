@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/navigation/app_routes.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/app_logo.dart';
 import '../providers/auth_provider.dart';
 
 /// First screen: checks for a saved login so returning users go straight to Home.
@@ -31,10 +33,12 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const AppLogo(size: 120),
+            const SizedBox(height: 16),
             Text('Study Sensei',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-            const CircularProgressIndicator(),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            const SizedBox(height: 24),
+            SizedBox(width: 26, height: 26, child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.primary)),
           ],
         ),
       ),

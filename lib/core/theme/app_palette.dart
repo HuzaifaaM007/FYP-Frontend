@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// One complete colour set. Every theme in the app is an AppPalette.
+/// Each theme has its OWN background, cards, text and accents, so the whole screen changes colour.
 class AppPalette {
   final String id;
   final String name;
@@ -16,7 +17,7 @@ class AppPalette {
   final Color textSecondary;
   final Color textDisabled;
 
-  final Color primary; // main buttons
+  final Color primary; // main buttons, selected tab
   final Color onPrimary;
 
   final Color accentPurple;
@@ -58,14 +59,14 @@ class AppPalette {
   bool get isDark => brightness == Brightness.dark;
 }
 
-/// The themes a student can pick from. The first one is the original Study Sensei look.
 class AppPalettes {
   AppPalettes._();
 
+  /// 1. The original Study Sensei look — the only black theme.
   static const midnight = AppPalette(
     id: 'midnight',
-    name: 'Midnight',
-    description: 'The classic black Study Sensei look.',
+    name: 'Midnight Black',
+    description: 'The original Study Sensei look.',
     brightness: Brightness.dark,
     background: Color(0xFF0A0A0A),
     surface: Color(0xFF1A1A1A),
@@ -86,127 +87,157 @@ class AppPalettes {
     warning: Color(0xFFFB8500),
   );
 
+  /// 2. The only blue theme.
   static const ocean = AppPalette(
     id: 'ocean',
-    name: 'Ocean',
-    description: 'Deep navy with teal and sky-blue accents.',
+    name: 'Ocean Blue',
+    description: 'Deep blue screens with bright cyan buttons.',
     brightness: Brightness.dark,
-    background: Color(0xFF0B1220),
-    surface: Color(0xFF131C2E),
-    surfaceElevated: Color(0xFF1C2740),
-    border: Color(0xFF26324D),
-    textPrimary: Color(0xFFEAF2FF),
-    textSecondary: Color(0xFF8FA3C7),
-    textDisabled: Color(0xFF4E5E7C),
-    primary: Color(0xFF4CC9F0),
-    onPrimary: Color(0xFF04131F),
-    accentPurple: Color(0xFF7B8CFF),
-    accentBlue: Color(0xFF4CC9F0),
-    accentOrange: Color(0xFFFFB454),
-    accentGreen: Color(0xFF2EE6A6),
-    accentPink: Color(0xFFFF6B9D),
-    success: Color(0xFF2EE6A6),
-    error: Color(0xFFFF6B7A),
-    warning: Color(0xFFFFB454),
+    background: Color(0xFF0B2545),
+    surface: Color(0xFF13315C),
+    surfaceElevated: Color(0xFF1B3F72),
+    border: Color(0xFF285089),
+    textPrimary: Color(0xFFFFFFFF),
+    textSecondary: Color(0xFFB4C8E6),
+    textDisabled: Color(0xFF6C86AD),
+    primary: Color(0xFF5CE1E6),
+    onPrimary: Color(0xFF062033),
+    accentPurple: Color(0xFFB39DFF),
+    accentBlue: Color(0xFF5CE1E6),
+    accentOrange: Color(0xFFFFC15E),
+    accentGreen: Color(0xFF6BF0B0),
+    accentPink: Color(0xFFFF8FB1),
+    success: Color(0xFF6BF0B0),
+    error: Color(0xFFFF8F8F),
+    warning: Color(0xFFFFC15E),
   );
 
-  static const forest = AppPalette(
-    id: 'forest',
-    name: 'Forest',
-    description: 'Calm dark green, easy on the eyes at night.',
+  /// 3. Green.
+  static const emerald = AppPalette(
+    id: 'emerald',
+    name: 'Emerald Green',
+    description: 'Rich green screens with golden buttons.',
     brightness: Brightness.dark,
-    background: Color(0xFF0C1410),
-    surface: Color(0xFF15221B),
-    surfaceElevated: Color(0xFF1E2F26),
-    border: Color(0xFF2A4034),
-    textPrimary: Color(0xFFEEF7F0),
-    textSecondary: Color(0xFF93AE9C),
-    textDisabled: Color(0xFF4F6657),
-    primary: Color(0xFF7BE495),
-    onPrimary: Color(0xFF07140B),
-    accentPurple: Color(0xFFB08CFF),
-    accentBlue: Color(0xFF5DC8E8),
-    accentOrange: Color(0xFFF5A663),
-    accentGreen: Color(0xFF7BE495),
-    accentPink: Color(0xFFF07EA3),
-    success: Color(0xFF7BE495),
-    error: Color(0xFFF07E7E),
-    warning: Color(0xFFF5A663),
+    background: Color(0xFF0B3D2E),
+    surface: Color(0xFF125240),
+    surfaceElevated: Color(0xFF186650),
+    border: Color(0xFF237A60),
+    textPrimary: Color(0xFFFFFFFF),
+    textSecondary: Color(0xFFBFE3D3),
+    textDisabled: Color(0xFF6FA48D),
+    primary: Color(0xFFF6C453),
+    onPrimary: Color(0xFF2B1D00),
+    accentPurple: Color(0xFFD4B5FF),
+    accentBlue: Color(0xFF8FD3FF),
+    accentOrange: Color(0xFFF6C453),
+    accentGreen: Color(0xFF9DF7C9),
+    accentPink: Color(0xFFFF9EB5),
+    success: Color(0xFF9DF7C9),
+    error: Color(0xFFFF9E9E),
+    warning: Color(0xFFF6C453),
   );
 
+  /// 4. Purple.
+  static const royal = AppPalette(
+    id: 'royal',
+    name: 'Royal Purple',
+    description: 'Purple screens with pink buttons.',
+    brightness: Brightness.dark,
+    background: Color(0xFF2A0F4F),
+    surface: Color(0xFF3A1A68),
+    surfaceElevated: Color(0xFF4A2580),
+    border: Color(0xFF5C3496),
+    textPrimary: Color(0xFFFFFFFF),
+    textSecondary: Color(0xFFD7C6F2),
+    textDisabled: Color(0xFF9A82BF),
+    primary: Color(0xFFFF7AC6),
+    onPrimary: Color(0xFF3A0628),
+    accentPurple: Color(0xFFE0B3FF),
+    accentBlue: Color(0xFF9CC9FF),
+    accentOrange: Color(0xFFFFC27A),
+    accentGreen: Color(0xFF8FF2C8),
+    accentPink: Color(0xFFFF7AC6),
+    success: Color(0xFF8FF2C8),
+    error: Color(0xFFFF8A9A),
+    warning: Color(0xFFFFC27A),
+  );
+
+  /// 5. Warm red / orange.
   static const sunset = AppPalette(
     id: 'sunset',
-    name: 'Sunset',
-    description: 'Warm dark plum with orange and coral accents.',
+    name: 'Sunset Red',
+    description: 'Warm red-brown screens with orange buttons.',
     brightness: Brightness.dark,
-    background: Color(0xFF17101A),
-    surface: Color(0xFF241827),
-    surfaceElevated: Color(0xFF312135),
-    border: Color(0xFF433047),
-    textPrimary: Color(0xFFFFF3EC),
-    textSecondary: Color(0xFFC2A3B0),
-    textDisabled: Color(0xFF6E5466),
-    primary: Color(0xFFFF8E5A),
-    onPrimary: Color(0xFF240F0A),
-    accentPurple: Color(0xFFC77DFF),
-    accentBlue: Color(0xFF6FB7FF),
-    accentOrange: Color(0xFFFF8E5A),
-    accentGreen: Color(0xFF5EE2B3),
-    accentPink: Color(0xFFFF5C8A),
-    success: Color(0xFF5EE2B3),
-    error: Color(0xFFFF5C8A),
-    warning: Color(0xFFFFB454),
+    background: Color(0xFF4A1414),
+    surface: Color(0xFF5E1E1C),
+    surfaceElevated: Color(0xFF732A25),
+    border: Color(0xFF8A3A31),
+    textPrimary: Color(0xFFFFFFFF),
+    textSecondary: Color(0xFFF2C9BD),
+    textDisabled: Color(0xFFB58276),
+    primary: Color(0xFFFF9F43),
+    onPrimary: Color(0xFF3A1A00),
+    accentPurple: Color(0xFFE6B3FF),
+    accentBlue: Color(0xFF9FD4FF),
+    accentOrange: Color(0xFFFF9F43),
+    accentGreen: Color(0xFFA3F0B5),
+    accentPink: Color(0xFFFF8FA3),
+    success: Color(0xFFA3F0B5),
+    error: Color(0xFFFFB3B3),
+    warning: Color(0xFFFFD166),
   );
 
-  static const lavender = AppPalette(
-    id: 'lavender',
-    name: 'Lavender',
-    description: 'Soft light theme with purple accents.',
+  /// 6. Light: white screens.
+  static const daylight = AppPalette(
+    id: 'daylight',
+    name: 'Daylight',
+    description: 'Bright white screens with teal buttons, good in daylight.',
     brightness: Brightness.light,
-    background: Color(0xFFF6F3FC),
+    background: Color(0xFFF4F7F6),
     surface: Color(0xFFFFFFFF),
-    surfaceElevated: Color(0xFFEDE7F8),
-    border: Color(0xFFDCD3EE),
-    textPrimary: Color(0xFF1E1530),
-    textSecondary: Color(0xFF6B5F85),
-    textDisabled: Color(0xFFB2A8C8),
-    primary: Color(0xFF7C4DFF),
+    surfaceElevated: Color(0xFFE6EEEC),
+    border: Color(0xFFD3DEDB),
+    textPrimary: Color(0xFF14211E),
+    textSecondary: Color(0xFF55706A),
+    textDisabled: Color(0xFFA3B5B0),
+    primary: Color(0xFF0F8B7E),
     onPrimary: Color(0xFFFFFFFF),
-    accentPurple: Color(0xFF7C4DFF),
-    accentBlue: Color(0xFF2F80ED),
-    accentOrange: Color(0xFFF2994A),
-    accentGreen: Color(0xFF27AE60),
-    accentPink: Color(0xFFEB5757),
-    success: Color(0xFF27AE60),
-    error: Color(0xFFEB5757),
-    warning: Color(0xFFF2994A),
+    accentPurple: Color(0xFF6E4BD8),
+    accentBlue: Color(0xFF1D72D8),
+    accentOrange: Color(0xFFE07A10),
+    accentGreen: Color(0xFF0F8B7E),
+    accentPink: Color(0xFFD43F6A),
+    success: Color(0xFF0F8B7E),
+    error: Color(0xFFD43F3F),
+    warning: Color(0xFFE07A10),
   );
 
-  static const paper = AppPalette(
-    id: 'paper',
-    name: 'Paper',
-    description: 'Clean light theme for reading in daylight.',
+  /// 7. Light: soft pink.
+  static const blossom = AppPalette(
+    id: 'blossom',
+    name: 'Cherry Blossom',
+    description: 'Soft pink screens with rose buttons.',
     brightness: Brightness.light,
-    background: Color(0xFFF7F7F5),
+    background: Color(0xFFFDEEF2),
     surface: Color(0xFFFFFFFF),
-    surfaceElevated: Color(0xFFEFEFEB),
-    border: Color(0xFFE0E0DA),
-    textPrimary: Color(0xFF1B1B1B),
-    textSecondary: Color(0xFF6A6A66),
-    textDisabled: Color(0xFFB4B4AE),
-    primary: Color(0xFF1B1B1B),
+    surfaceElevated: Color(0xFFF9DCE4),
+    border: Color(0xFFF0C4D0),
+    textPrimary: Color(0xFF3A1622),
+    textSecondary: Color(0xFF8A5566),
+    textDisabled: Color(0xFFC9A1AD),
+    primary: Color(0xFFD6336C),
     onPrimary: Color(0xFFFFFFFF),
-    accentPurple: Color(0xFF7048E8),
-    accentBlue: Color(0xFF1C7ED6),
-    accentOrange: Color(0xFFE8590C),
-    accentGreen: Color(0xFF0CA678),
+    accentPurple: Color(0xFF8E44C9),
+    accentBlue: Color(0xFF2F7BD9),
+    accentOrange: Color(0xFFE8740C),
+    accentGreen: Color(0xFF1E9E6A),
     accentPink: Color(0xFFD6336C),
-    success: Color(0xFF0CA678),
-    error: Color(0xFFD6336C),
-    warning: Color(0xFFE8590C),
+    success: Color(0xFF1E9E6A),
+    error: Color(0xFFC92A2A),
+    warning: Color(0xFFE8740C),
   );
 
-  static const all = [midnight, ocean, forest, sunset, lavender, paper];
+  static const all = [midnight, ocean, emerald, royal, sunset, daylight, blossom];
 
   static AppPalette byId(String? id) => all.firstWhere((p) => p.id == id, orElse: () => midnight);
 }

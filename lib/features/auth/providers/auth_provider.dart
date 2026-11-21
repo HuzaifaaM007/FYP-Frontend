@@ -30,6 +30,9 @@ class AuthProvider extends ChangeNotifier {
 
   Future<bool> restoreSession() => _authService.hasValidSession();
 
+  /// Set when login/register needs the email code; the screen then opens VerifyEmailScreen.
+  String? pendingVerificationEmail;
+
   Future<bool> login(String email, String password) => _run(() => _authService.login(email, password));
 
   Future<bool> register(String email, String password, String fullName) =>
@@ -38,10 +41,14 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> _run(Future<void> Function() action) async {
     isLoading = true;
     errorMessage = null;
+    pendingVerificationEmail = null;
     notifyListeners();
     try {
       await action();
       return true;
+    } on EmailNotVerifiedException catch (e) {
+      pendingVerificationEmail = e.email;
+      return false;
     } on AuthException catch (e) {
       errorMessage = e.message;
       return false;

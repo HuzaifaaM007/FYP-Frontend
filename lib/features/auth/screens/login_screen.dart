@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/navigation/app_routes.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_logo.dart';
 import '../providers/auth_provider.dart';
+import 'forgot_password_screen.dart';
 import 'register_screen.dart';
+import 'verify_email_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,8 +32,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.read<AuthProvider>();
     if (auth.isLoading) return;
     final success = await auth.login(_emailController.text.trim(), _passwordController.text);
-    if (success && mounted) {
+    if (!mounted) return;
+    if (success) {
       Navigator.pushReplacementNamed(context, AppRoutes.home);
+    } else if (auth.pendingVerificationEmail != null) {
+      // Account exists but the email was never confirmed: a fresh code was just sent.
+      Navigator.push(context, MaterialPageRoute(builder: (_) => VerifyEmailScreen(email: auth.pendingVerificationEmail!)));
     }
   }
 
@@ -49,6 +57,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const Center(child: AppLogo(size: 96)),
+                    const SizedBox(height: 12),
                     Text(
                       'Study Sensei',
                       textAlign: TextAlign.center,
@@ -79,11 +89,23 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          auth.clearError();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => ForgotPasswordScreen(initialEmail: _emailController.text.trim())),
+                          );
+                        },
+                        child: Text('Forgot password?', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                      ),
+                    ),
                     if (auth.errorMessage != null) ...[
-                      const SizedBox(height: 8),
-                      Text(auth.errorMessage!, style: const TextStyle(color: Colors.redAccent)),
+                      Text(auth.errorMessage!, style: TextStyle(color: AppColors.error)),
                     ],
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     AppButton(label: 'Continue', isLoading: auth.isLoading, onPressed: _submit),
                     const SizedBox(height: 16),
                     TextButton(
