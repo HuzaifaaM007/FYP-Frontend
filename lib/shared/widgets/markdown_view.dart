@@ -1,135 +1,143 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_highlight/themes/atom-one-dark.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+import 'package:markdown/markdown.dart' as md;
+import 'package:url_launcher/url_launcher.dart';
+import '../../core/config/env.dart';
 import '../../core/theme/app_colors.dart';
 
-/// Shows lesson text written in simple Markdown: headings (#, ##, ###), paragraphs, bullet and numbered
-/// lists, fenced code blocks, **bold**, *italic* and `inline code`. Text can be selected and copied.
+/// Shows lesson text written by the admin in Markdown, optionally mixed with simple HTML.
+///
+/// Supports headings, paragraphs, bold/italic/underline/strikethrough, bullet and numbered lists,
+/// quotes, links (open in the browser), images (uploaded lesson images load from the server),
+/// tables, dividers, inline code and code blocks with syntax colouring. Text can be selected.
+///
+/// How it works: Markdown -> HTML (package:markdown, GitHub flavour, unsafe tags filtered out)
+/// -> Flutter widgets (flutter_widget_from_html_core), styled with the current theme's colours.
 class MarkdownView extends StatelessWidget {
   final String data;
   const MarkdownView({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
-    final blocks = _parse(_upgradeLegacy(data));
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [for (final block in blocks) _buildBlock(block)],
+    final html = md.markdownToHtml(
+      _prepare(data),
+      extensionSet: md.ExtensionSet.gitHubFlavored, // tables, ~~strike~~, autolinks
+      enableTagfilter: true, // GitHub's filter: neutralises <script>, <iframe>, <style> ...
+    );
+
+    return SelectionArea(
+      child: HtmlWidget(
+        html,
+        // Lesson images are stored as "/storage/lesson_images/..." on the backend.
+        baseUrl: Uri.tryParse(Env.apiBaseUrl.endsWith('/') ? Env.apiBaseUrl : '${Env.apiBaseUrl}/'),
+        textStyle: TextStyle(fontSize: 15, height: 1.6, color: AppColors.textPrimary),
+        onTapUrl: (url) async {
+          final uri = Uri.tryParse(url);
+          if (uri == null || !(uri.scheme == 'http' || uri.scheme == 'https' || uri.scheme == 'mailto')) return true;
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          return true;
+        },
+        customStylesBuilder: _styles,
+        customWidgetBuilder: _widgets,
+      ),
     );
   }
 
-  // ---------------------------------------------------------------- building
+  // ---------------------------------------------------------------- styling
 
-  Widget _buildBlock(_Block block) {
-    switch (block.kind) {
-      case _Kind.heading:
-        final size = block.level <= 1 ? 24.0 : block.level == 2 ? 20.0 : block.level == 3 ? 17.0 : 15.0;
-        return Padding(
-          padding: EdgeInsets.only(top: block.level <= 2 ? 22 : 16, bottom: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SelectableText.rich(
-                TextSpan(
-                  children: _inline(block.text, TextStyle(fontSize: size, fontWeight: FontWeight.w700, height: 1.3)),
-                ),
-              ),
-              if (block.level <= 2)
-                Padding(
-                  padding: EdgeInsets.only(top: 6),
-                  child: Divider(height: 1, color: AppColors.border),
-                ),
-            ],
-          ),
-        );
-      case _Kind.paragraph:
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: SelectableText.rich(
-            TextSpan(children: _inline(block.text, const TextStyle(fontSize: 15, height: 1.6))),
-          ),
-        );
-      case _Kind.bullet:
-      case _Kind.numbered:
-        return Padding(
-          padding: EdgeInsets.only(left: 6.0 + block.level * 16, bottom: 6),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 24,
-                child: Text(block.kind == _Kind.bullet ? '•' : '${block.number}.',
-                    style: TextStyle(fontSize: 15, height: 1.6, color: AppColors.textSecondary)),
-              ),
-              Expanded(
-                child: SelectableText.rich(
-                  TextSpan(children: _inline(block.text, const TextStyle(fontSize: 15, height: 1.6))),
-                ),
-              ),
-            ],
-          ),
-        );
-      case _Kind.quote:
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-          decoration: BoxDecoration(
-            border: Border(left: BorderSide(color: AppColors.accentBlue, width: 3)),
-          ),
-          child: SelectableText.rich(
-            TextSpan(
-              children: _inline(
-                block.text,
-                TextStyle(fontSize: 15, height: 1.6, fontStyle: FontStyle.italic, color: AppColors.textSecondary),
-              ),
-            ),
-          ),
-        );
-      case _Kind.code:
-        return Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          width: double.infinity,
-          decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: HighlightView(
-              block.text,
-              language: _language(block.lang),
-              theme: atomOneDarkTheme,
-              padding: const EdgeInsets.all(12),
-              textStyle: const TextStyle(fontFamily: 'monospace', fontSize: 12.5, height: 1.4),
-            ),
-          ),
-        );
+  static String _hex(Color c) => '#${(c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
+
+  Map<String, String>? _styles(dynamic element) {
+    final border = _hex(AppColors.border);
+    switch (element.localName as String?) {
+      case 'h1':
+        return {'font-size': '24px', 'font-weight': '700', 'margin': '22px 0 10px', 'padding-bottom': '6px', 'border-bottom': '1px solid $border', 'line-height': '1.3'};
+      case 'h2':
+        return {'font-size': '20px', 'font-weight': '700', 'margin': '20px 0 8px', 'padding-bottom': '5px', 'border-bottom': '1px solid $border', 'line-height': '1.3'};
+      case 'h3':
+        return {'font-size': '17px', 'font-weight': '700', 'margin': '16px 0 6px'};
+      case 'h4':
+      case 'h5':
+      case 'h6':
+        return {'font-size': '15px', 'font-weight': '700', 'margin': '14px 0 4px'};
+      case 'p':
+        // Justified like a book: straight left AND right edges.
+        return {'margin': '0 0 12px', 'text-align': 'justify'};
+      case 'a':
+        return {'color': _hex(AppColors.accentBlue), 'text-decoration': 'underline'};
+      case 'blockquote':
+        return {
+          'margin': '6px 0 14px',
+          'padding': '10px 14px',
+          'border-left': '3px solid ${_hex(AppColors.accentPurple)}',
+          'background-color': _hex(AppColors.surface),
+          'color': _hex(AppColors.textSecondary),
+          'font-style': 'italic',
+          'text-align': 'justify',
+        };
+      case 'code': // inline code (code blocks are handled by _widgets)
+        return {
+          'font-family': 'monospace',
+          'font-size': '13px',
+          'background-color': _hex(AppColors.surfaceElevated),
+          'color': _hex(AppColors.accentOrange),
+        };
+      case 'ul':
+      case 'ol':
+        return {'margin': '0 0 12px', 'padding-left': '22px'};
+      case 'li':
+        return {'margin': '0 0 4px', 'text-align': 'justify'};
+      case 'hr':
+        return {'margin': '18px 0', 'border-top': '1px solid $border'};
+      case 'table':
+        return {'margin': '6px 0 14px', 'border-collapse': 'collapse', 'border': '1px solid $border'};
+      case 'th':
+        return {
+          'padding': '8px 10px',
+          'border': '1px solid $border',
+          'background-color': _hex(AppColors.surfaceElevated),
+          'font-weight': '600',
+          'text-align': 'left',
+        };
+      case 'td':
+        return {'padding': '8px 10px', 'border': '1px solid $border', 'vertical-align': 'top'};
+      case 'mark':
+        return {'background-color': _hex(AppColors.accentOrange), 'color': '#000000'};
+      case 'del':
+        return {'color': _hex(AppColors.textSecondary)};
     }
+    return null;
   }
 
-  List<InlineSpan> _inline(String text, TextStyle base) {
-    final spans = <InlineSpan>[];
-    final pattern = RegExp(r'(\*\*[^*]+\*\*|`[^`]+`|\*[^*\s][^*]*\*)');
-    var last = 0;
-    for (final match in pattern.allMatches(text)) {
-      if (match.start > last) spans.add(TextSpan(text: text.substring(last, match.start), style: base));
-      final token = match.group(0)!;
-      if (token.startsWith('**')) {
-        spans.add(TextSpan(text: token.substring(2, token.length - 2), style: base.copyWith(fontWeight: FontWeight.w700)));
-      } else if (token.startsWith('`')) {
-        spans.add(TextSpan(
-          text: token.substring(1, token.length - 1),
-          style: base.copyWith(
-            fontFamily: 'monospace',
-            fontSize: (base.fontSize ?? 15) - 1,
-            backgroundColor: AppColors.surfaceElevated,
-            color: AppColors.accentGreen,
+  Widget? _widgets(dynamic element) {
+    final name = element.localName as String?;
+
+    // Code blocks: syntax colouring + horizontal scroll, same look as before.
+    if (name == 'pre') {
+      final children = element.children as List;
+      final code = children.isNotEmpty ? children.first : element;
+      final classes = (code.className as String? ?? '');
+      final lang = RegExp(r'language-([\w#+-]+)').firstMatch(classes)?.group(1);
+      final text = (code.text as String).replaceAll(RegExp(r'\n$'), '');
+      return Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        width: double.infinity,
+        decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(8)),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: HighlightView(
+            text,
+            language: _language(lang),
+            theme: atomOneDarkTheme,
+            padding: const EdgeInsets.all(12),
+            textStyle: const TextStyle(fontFamily: 'monospace', fontSize: 12.5, height: 1.4),
           ),
-        ));
-      } else {
-        spans.add(TextSpan(text: token.substring(1, token.length - 1), style: base.copyWith(fontStyle: FontStyle.italic)));
-      }
-      last = match.end;
+        ),
+      );
     }
-    if (last < text.length) spans.add(TextSpan(text: text.substring(last), style: base));
-    return spans;
+    return null; // everything else uses the package's normal rendering + _styles
   }
 
   String _language(String? name) {
@@ -151,7 +159,6 @@ class MarkdownView extends StatelessWidget {
       case 'javascript':
       case 'js':
       case 'jsx':
-      case 'react native':
       case 'typescript':
       case 'ts':
         return 'javascript';
@@ -168,15 +175,26 @@ class MarkdownView extends StatelessWidget {
       case 'cpp':
       case 'c++':
         return 'cpp';
+      case 'php':
+        return 'php';
       default:
         return 'plaintext';
     }
   }
 
-  // ----------------------------------------------------------------- parsing
+  // ---------------------------------------------------------------- input clean-up
 
-  /// Older seeded lessons mark code as "Code Example (Java - ...)" followed by lines up to a blank line.
-  /// Turn that into fenced code so the same renderer handles both kinds of lesson.
+  /// Makes older lesson text render well with the standard Markdown parser:
+  /// - "Code Example (Java - ...)" blocks from early seeded lessons become fenced code;
+  /// - "•" bullets (from PDF imports) become "-" bullets.
+  static String _prepare(String text) {
+    final normalized = text.replaceAll('\r\n', '\n').replaceAllMapped(
+          RegExp(r'^(\s*)•\s+', multiLine: true),
+          (m) => '${m.group(1)}- ',
+        );
+    return _upgradeLegacy(normalized);
+  }
+
   static String _upgradeLegacy(String text) {
     if (text.contains('```') || !text.contains('Code Example')) return text;
     final out = StringBuffer();
@@ -200,89 +218,4 @@ class MarkdownView extends StatelessWidget {
     if (inCode) out.writeln('```');
     return out.toString();
   }
-
-  static List<_Block> _parse(String text) {
-    final blocks = <_Block>[];
-    final lines = text.replaceAll('\r\n', '\n').split('\n');
-    final paragraph = <String>[];
-
-    void flushParagraph() {
-      if (paragraph.isNotEmpty) {
-        blocks.add(_Block(_Kind.paragraph, paragraph.join(' ').trim()));
-        paragraph.clear();
-      }
-    }
-
-    final heading = RegExp(r'^(#{1,6})\s+(.*)$');
-    final bullet = RegExp(r'^(\s*)[-*•]\s+(.*)$');
-    final numbered = RegExp(r'^(\s*)(\d+)[.)]\s+(.*)$');
-
-    var i = 0;
-    while (i < lines.length) {
-      final line = lines[i];
-      final trimmed = line.trim();
-
-      if (trimmed.startsWith('```')) {
-        flushParagraph();
-        final lang = trimmed.substring(3).trim();
-        final code = <String>[];
-        i++;
-        while (i < lines.length && !lines[i].trim().startsWith('```')) {
-          code.add(lines[i]);
-          i++;
-        }
-        i++; // closing fence
-        blocks.add(_Block(_Kind.code, code.join('\n').trimRight(), lang: lang.isEmpty ? null : lang));
-        continue;
-      }
-      if (trimmed.isEmpty) {
-        flushParagraph();
-        i++;
-        continue;
-      }
-      final h = heading.firstMatch(trimmed);
-      if (h != null) {
-        flushParagraph();
-        blocks.add(_Block(_Kind.heading, h.group(2)!.trim(), level: h.group(1)!.length));
-        i++;
-        continue;
-      }
-      final b = bullet.firstMatch(line);
-      if (b != null) {
-        flushParagraph();
-        blocks.add(_Block(_Kind.bullet, b.group(2)!.trim(), level: (b.group(1)!.length ~/ 2).clamp(0, 3).toInt()));
-        i++;
-        continue;
-      }
-      final n = numbered.firstMatch(line);
-      if (n != null) {
-        flushParagraph();
-        blocks.add(_Block(_Kind.numbered, n.group(3)!.trim(),
-            level: (n.group(1)!.length ~/ 2).clamp(0, 3).toInt(), number: int.parse(n.group(2)!)));
-        i++;
-        continue;
-      }
-      if (trimmed.startsWith('>')) {
-        flushParagraph();
-        blocks.add(_Block(_Kind.quote, trimmed.replaceFirst(RegExp(r'^>\s?'), '')));
-        i++;
-        continue;
-      }
-      paragraph.add(trimmed);
-      i++;
-    }
-    flushParagraph();
-    return blocks;
-  }
-}
-
-enum _Kind { heading, paragraph, bullet, numbered, quote, code }
-
-class _Block {
-  final _Kind kind;
-  final String text;
-  final int level;
-  final int number;
-  final String? lang;
-  _Block(this.kind, this.text, {this.level = 0, this.number = 0, this.lang});
 }

@@ -18,12 +18,23 @@ class SettingsScreen extends StatelessWidget {
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text('Theme', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+              Text(
+                'Theme',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text('Pick the look you like. It applies to the whole app and is remembered on this phone.',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              Text(
+                'Pick the look you like. It applies to the whole app and is remembered on this phone.',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              ),
               const SizedBox(height: 16),
-              ...AppPalettes.all.map((p) => _ThemeTile(palette: p, selected: p.id == current.id)),
+              ...AppPalettes.all.map(
+                (p) => _ThemeTile(palette: p, selected: p.id == current.id),
+              ),
             ],
           ),
         );
@@ -45,7 +56,10 @@ class _ThemeTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: selected ? AppColors.primary : AppColors.border, width: selected ? 2 : 1),
+        border: Border.all(
+          color: selected ? AppColors.primary : AppColors.border,
+          width: selected ? 2 : 1,
+        ),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -70,12 +84,23 @@ class _ThemeTile extends StatelessWidget {
                     Container(
                       height: 18,
                       width: 60,
-                      decoration: BoxDecoration(color: p.surface, borderRadius: BorderRadius.circular(5), border: Border.all(color: p.border)),
+                      decoration: BoxDecoration(
+                        color: p.surface,
+                        borderRadius: BorderRadius.circular(5),
+                        border: Border.all(color: p.border),
+                      ),
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: Padding(
                           padding: const EdgeInsets.only(left: 5),
-                          child: Container(height: 5, width: 30, decoration: BoxDecoration(color: p.textSecondary, borderRadius: BorderRadius.circular(3))),
+                          child: Container(
+                            height: 5,
+                            width: 30,
+                            decoration: BoxDecoration(
+                              color: p.textSecondary,
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -87,7 +112,10 @@ class _ThemeTile extends StatelessWidget {
                             width: 11,
                             height: 11,
                             margin: const EdgeInsets.only(right: 4),
-                            decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+                            decoration: BoxDecoration(
+                              color: c,
+                              shape: BoxShape.circle,
+                            ),
                           ),
                       ],
                     ),
@@ -101,21 +129,55 @@ class _ThemeTile extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text(p.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
+                        Flexible(
+                          child: Text(
+                            p.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                          decoration: BoxDecoration(color: AppColors.surfaceElevated, borderRadius: BorderRadius.circular(8)),
-                          child: Text(p.isDark ? 'Dark' : 'Light', style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceElevated,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            p.isDark ? 'Dark' : 'Light',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 3),
-                    Text(p.description, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                    Text(
+                      p.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              Icon(selected ? Icons.check_circle : Icons.circle_outlined, color: selected ? AppColors.primary : AppColors.textDisabled),
+              Icon(
+                selected ? Icons.check_circle : Icons.circle_outlined,
+                color: selected ? AppColors.primary : AppColors.textDisabled,
+              ),
             ],
           ),
         ),

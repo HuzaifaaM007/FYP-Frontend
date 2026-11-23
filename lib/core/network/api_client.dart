@@ -14,56 +14,66 @@ class ApiClient {
   Completer<bool>? _refreshing;
 
   ApiClient._internal() {
-    dio = Dio(BaseOptions(
-      baseUrl: Env.apiBaseUrl,
-      connectTimeout: const Duration(seconds: 10),
-      // AI calls (quiz, summary) can take over a minute when the model is cold.
-      receiveTimeout: const Duration(seconds: 150),
-    ));
+    dio = Dio(
+      BaseOptions(
+        baseUrl: Env.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 10),
+        // AI calls (quiz, summary) can take over a minute when the model is cold.
+        receiveTimeout: const Duration(seconds: 150),
+        // Free ngrok shows a warning page to browsers; this header always skips it.
+        headers: {'ngrok-skip-browser-warning': 'true'},
+      ),
+    );
 
-    dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final token = await SecureStorageService.getAccessToken();
-        if (token != null && !options.headers.containsKey('Authorization')) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        handler.next(options);
-      },
-      onError: (error, handler) async {
-        final path = error.requestOptions.path;
-        final isAuthCall = path.contains('/auth/login') ||
-            path.contains('/auth/register') ||
-            path.contains('/auth/refresh');
-        final alreadyRetried = error.requestOptions.extra['retried'] == true;
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await SecureStorageService.getAccessToken();
+          if (token != null && !options.headers.containsKey('Authorization')) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          handler.next(options);
+        },
+        onError: (error, handler) async {
+          final path = error.requestOptions.path;
+          final isAuthCall =
+              path.contains('/auth/login') ||
+              path.contains('/auth/register') ||
+              path.contains('/auth/refresh');
+          final alreadyRetried = error.requestOptions.extra['retried'] == true;
 
-        // The server itself could not be reached: tell the app so it can show one clear dialog.
-        if (error.type == DioExceptionType.connectionError ||
-            error.type == DioExceptionType.connectionTimeout ||
-            error.type == DioExceptionType.receiveTimeout ||
-            error.type == DioExceptionType.sendTimeout) {
-          SessionEvents.notifyConnectionLost(
-            error.type == DioExceptionType.receiveTimeout
-                ? 'The server took too long to respond. The AI service may be busy or paused.'
-                : 'Could not reach the Study Sensei server. Check your internet connection, or that the server is running.',
-          );
-        }
+          // The server itself could not be reached: tell the app so it can show one clear dialog.
+          if (error.type == DioExceptionType.connectionError ||
+              error.type == DioExceptionType.connectionTimeout ||
+              error.type == DioExceptionType.receiveTimeout ||
+              error.type == DioExceptionType.sendTimeout) {
+            SessionEvents.notifyConnectionLost(
+              error.type == DioExceptionType.receiveTimeout
+                  ? 'The server took too long to respond. The AI service may be busy or paused.'
+                  : 'Could not reach the Study Sensei server. Check your internet connection, or that the server is running.',
+            );
+          }
 
-        if (error.response?.statusCode == 401 && !isAuthCall && !alreadyRetried) {
-          final refreshed = await _refreshOnce();
-          if (refreshed) {
-            final request = error.requestOptions;
-            request.extra['retried'] = true;
-            request.headers['Authorization'] = 'Bearer ${await SecureStorageService.getAccessToken()}';
-            try {
-              return handler.resolve(await dio.fetch(request));
-            } on DioException catch (e) {
-              return handler.next(e);
+          if (error.response?.statusCode == 401 &&
+              !isAuthCall &&
+              !alreadyRetried) {
+            final refreshed = await _refreshOnce();
+            if (refreshed) {
+              final request = error.requestOptions;
+              request.extra['retried'] = true;
+              request.headers['Authorization'] =
+                  'Bearer ${await SecureStorageService.getAccessToken()}';
+              try {
+                return handler.resolve(await dio.fetch(request));
+              } on DioException catch (e) {
+                return handler.next(e);
+              }
             }
           }
-        }
-        handler.next(error);
-      },
-    ));
+          handler.next(error);
+        },
+      ),
+    );
   }
 
   Future<bool> _refreshOnce() {
@@ -83,11 +93,13 @@ class ApiClient {
     if (refreshToken == null) return false;
 
     try {
-      final response = await Dio(BaseOptions(baseUrl: Env.apiBaseUrl)).post(
-        '/auth/refresh',
-        data: {'refresh_token': refreshToken},
-      );
-      await saveTokensFrom(response.data);
+      // ignore: unused_local_variable
+      final response = await Dio(
+        BaseOptions(
+          baseUrl: Env.apiBaseUrl,
+          headers: {'ngrok-skip-browser-warning': 'true'},
+        ),
+      ).post('/auth/refresh', data: {'refresh_token': refreshToken});
       return true;
     } on DioException catch (e) {
       // Only a real rejection ends the session. A dropped connection should not log the user out.
