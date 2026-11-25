@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/storage/secure_storage_service.dart';
+import '../../../core/network/offline_cache.dart';
 
 class AuthException implements Exception {
   final String message;
@@ -22,10 +23,10 @@ class CodeRequestResult {
   const CodeRequestResult(this.sent, this.retryAfter, this.message);
 
   factory CodeRequestResult.fromJson(Map data) => CodeRequestResult(
-        data['sent'] == true,
-        (data['retry_after'] as num?)?.toInt() ?? 0,
-        data['message'] as String? ?? '',
-      );
+    data['sent'] == true,
+    (data['retry_after'] as num?)?.toInt() ?? 0,
+    data['message'] as String? ?? '',
+  );
 }
 
 class AuthService {
@@ -33,15 +34,22 @@ class AuthService {
 
   Future<void> login(String email, String password) async {
     try {
-      final response = await _dio.post('/auth/login', data: {
-        'email': email,
-        'password': password,
-      });
+      final response = await _dio.post(
+        '/auth/login',
+        data: {'email': email, 'password': password},
+      );
       await ApiClient.saveTokensFrom(response.data);
     } on DioException catch (e) {
-      final detail = e.response?.data is Map ? (e.response!.data as Map)['detail'] : null;
-      if (e.response?.statusCode == 403 && detail is Map && detail['code'] == 'email_not_verified') {
-        throw EmailNotVerifiedException(detail['email'] as String? ?? email, detail['message'] as String? ?? '');
+      final detail = e.response?.data is Map
+          ? (e.response!.data as Map)['detail']
+          : null;
+      if (e.response?.statusCode == 403 &&
+          detail is Map &&
+          detail['code'] == 'email_not_verified') {
+        throw EmailNotVerifiedException(
+          detail['email'] as String? ?? email,
+          detail['message'] as String? ?? '',
+        );
       }
       throw AuthException(_mapLoginError(e));
     }
@@ -52,17 +60,19 @@ class AuthService {
   Future<void> register(String email, String password, String fullName) async {
     Response response;
     try {
-      response = await _dio.post('/auth/register', data: {
-        'email': email,
-        'password': password,
-        'full_name': fullName,
-      });
+      response = await _dio.post(
+        '/auth/register',
+        data: {'email': email, 'password': password, 'full_name': fullName},
+      );
     } on DioException catch (e) {
       throw AuthException(_mapRegisterError(e));
     }
     final data = response.data;
     if (data is Map && data['verification_required'] == true) {
-      throw EmailNotVerifiedException(data['email'] as String? ?? email, 'We sent a 6-digit code to your email.');
+      throw EmailNotVerifiedException(
+        data['email'] as String? ?? email,
+        'We sent a 6-digit code to your email.',
+      );
     }
     await ApiClient.saveTokensFrom(data);
   }
@@ -70,49 +80,72 @@ class AuthService {
   // ---------------------------------------------------------------- email codes
   Future<void> verifyEmail(String email, String code) async {
     try {
-      final response = await _dio.post('/auth/verify-email', data: {'email': email, 'code': code});
+      final response = await _dio.post(
+        '/auth/verify-email',
+        data: {'email': email, 'code': code},
+      );
       await ApiClient.saveTokensFrom(response.data);
     } on DioException catch (e) {
-      throw AuthException(_detailOr(e, 'Could not verify the code. Please try again.'));
+      throw AuthException(
+        _detailOr(e, 'Could not verify the code. Please try again.'),
+      );
     }
   }
 
   Future<CodeRequestResult> resendCode(String email) async {
     try {
-      final response = await _dio.post('/auth/resend-code', data: {'email': email});
+      final response = await _dio.post(
+        '/auth/resend-code',
+        data: {'email': email},
+      );
       return CodeRequestResult.fromJson(response.data as Map);
     } on DioException catch (e) {
-      throw AuthException(_detailOr(e, 'Could not send a new code. Please try again.'));
+      throw AuthException(
+        _detailOr(e, 'Could not send a new code. Please try again.'),
+      );
     }
   }
 
   Future<CodeRequestResult> forgotPassword(String email) async {
     try {
-      final response = await _dio.post('/auth/forgot-password', data: {'email': email});
+      final response = await _dio.post(
+        '/auth/forgot-password',
+        data: {'email': email},
+      );
       return CodeRequestResult.fromJson(response.data as Map);
     } on DioException catch (e) {
-      if (e.response?.statusCode == 422) throw AuthException('Enter a valid email address.');
-      throw AuthException(_detailOr(e, 'Could not send the reset code. Please try again.'));
+      if (e.response?.statusCode == 422)
+        throw AuthException('Enter a valid email address.');
+      throw AuthException(
+        _detailOr(e, 'Could not send the reset code. Please try again.'),
+      );
     }
   }
 
-  Future<void> resetPassword(String email, String code, String newPassword) async {
+  Future<void> resetPassword(
+    String email,
+    String code,
+    String newPassword,
+  ) async {
     try {
-      final response = await _dio.post('/auth/reset-password', data: {
-        'email': email,
-        'code': code,
-        'new_password': newPassword,
-      });
+      final response = await _dio.post(
+        '/auth/reset-password',
+        data: {'email': email, 'code': code, 'new_password': newPassword},
+      );
       await ApiClient.saveTokensFrom(response.data);
     } on DioException catch (e) {
-      throw AuthException(_detailOr(e, 'Could not reset your password. Please try again.'));
+      throw AuthException(
+        _detailOr(e, 'Could not reset your password. Please try again.'),
+      );
     }
   }
 
   String _detailOr(DioException e, String fallback) {
-    if (e.response == null) return 'Could not reach the server. Check your connection and try again.';
+    if (e.response == null)
+      return 'Could not reach the server. Check your connection and try again.';
     final data = e.response!.data;
-    if (data is Map && data['detail'] is String) return data['detail'] as String;
+    if (data is Map && data['detail'] is String)
+      return data['detail'] as String;
     return fallback;
   }
 
@@ -123,7 +156,9 @@ class AuthService {
   /// - server unreachable     -> the app shows its "Connection problem" dialog, screens show Retry.
   Future<bool> hasValidSession() async {
     if (await SecureStorageService.getAccessToken() == null) return false;
-    _dio.get('/auth/me').catchError((_) => Response(requestOptions: RequestOptions()));
+    _dio
+        .get('/auth/me')
+        .catchError((_) => Response(requestOptions: RequestOptions()));
     return true;
   }
 
@@ -136,6 +171,7 @@ class AuthService {
         // Signing out on this device is enough if the server cannot be reached.
       }
     }
+    await OfflineCache.clearAll();
     await SecureStorageService.clear();
   }
 
@@ -143,8 +179,10 @@ class AuthService {
     try {
       await _dio.delete('/auth/me', data: {'password': password});
     } on DioException catch (e) {
-      if (e.response?.statusCode == 400) throw AuthException('That password is not correct.');
-      if (e.response == null) throw AuthException('Could not reach the server. Try again.');
+      if (e.response?.statusCode == 400)
+        throw AuthException('That password is not correct.');
+      if (e.response == null)
+        throw AuthException('Could not reach the server. Try again.');
       throw AuthException('Could not delete your account. Please try again.');
     }
     await SecureStorageService.clear();
@@ -165,12 +203,15 @@ class AuthService {
 
   String _mapRegisterError(DioException e) {
     final statusCode = e.response?.statusCode;
-    if (statusCode == 409) return 'An account with this email already exists. Try logging in, or use "Forgot password?".';
+    if (statusCode == 409)
+      return 'An account with this email already exists. Try logging in, or use "Forgot password?".';
     if (statusCode == 400) {
       final data = e.response?.data;
-      if (data is Map && data['detail'] is String) return data['detail'] as String;
+      if (data is Map && data['detail'] is String)
+        return data['detail'] as String;
     }
-    if (statusCode == 422) return 'Please check your details (password needs at least 8 characters).';
+    if (statusCode == 422)
+      return 'Please check your details (password needs at least 8 characters).';
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.connectionError) {

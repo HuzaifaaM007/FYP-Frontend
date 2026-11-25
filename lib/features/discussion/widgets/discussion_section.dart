@@ -148,10 +148,13 @@ class _DiscussionSectionState extends State<DiscussionSection> {
       );
       if (!mounted) return;
       setState(() {
-        if (created.parentId == null) {
-          _comments.insert(0, created);
-        } else {
-          _find(created.parentId!)?.replies.add(created);
+        // The live update may have added it already (it often arrives before this reply)
+        if (_find(created.commentId) == null) {
+          if (created.parentId == null) {
+            _comments.insert(0, created);
+          } else {
+            _find(created.parentId!)?.replies.add(created);
+          }
         }
         _input.clear();
         _replyTo = null;
